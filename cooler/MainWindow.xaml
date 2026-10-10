@@ -1,0 +1,95 @@
+<Window x:Class="Bs1Cooler.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="BS1 Cooler" Width="380" SizeToContent="Height" ResizeMode="CanMinimize"
+        WindowStartupLocation="Manual" ShowInTaskbar="True">
+    <Window.Resources>
+        <Style x:Key="Section" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,18,0,8"/>
+            <Setter Property="Opacity" Value="0.75"/>
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,12,0"/>
+        </Style>
+    </Window.Resources>
+
+    <StackPanel Margin="20,14,20,20">
+        <!-- header -->
+        <DockPanel>
+            <ToggleButton x:Name="PowerBtn" DockPanel.Dock="Right" Width="96" Height="36" Click="Power_Click"/>
+            <StackPanel>
+                <TextBlock x:Name="StatusText" FontSize="26" FontWeight="SemiBold"/>
+                <TextBlock x:Name="TempText" Opacity="0.7" Margin="0,2,0,0"/>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- fan -->
+        <TextBlock Text="Fan" Style="{StaticResource Section}"/>
+        <StackPanel Orientation="Horizontal">
+            <RadioButton x:Name="SmartRadio" Content="Smart (temperature)" GroupName="fan" Click="Fan_Click" Margin="0,0,16,0"/>
+            <RadioButton x:Name="FixedRadio" Content="Fixed" GroupName="fan" Click="Fan_Click"/>
+        </StackPanel>
+        <DockPanel x:Name="FixedRow" Margin="0,8,0,0">
+            <TextBlock x:Name="FixedText" DockPanel.Dock="Right" Width="72" TextAlignment="Right" VerticalAlignment="Center"/>
+            <Slider x:Name="FixedSlider" Minimum="1300" Maximum="3000" TickFrequency="50" IsSnapToTickEnabled="True"
+                    ValueChanged="FixedSlider_ValueChanged" VerticalAlignment="Center"/>
+        </DockPanel>
+
+        <!-- lighting -->
+        <DockPanel Margin="0,18,0,8">
+            <CheckBox x:Name="LightOn" DockPanel.Dock="Right" Content="On" Click="Light_Changed" MinWidth="0"/>
+            <TextBlock Text="Lighting" Style="{StaticResource Section}" Margin="0"/>
+        </DockPanel>
+        <StackPanel x:Name="LightPanel">
+            <DockPanel Margin="0,0,0,8">
+                <TextBlock Text="Effect" Style="{StaticResource Label}" Width="80"/>
+                <ComboBox x:Name="LightMode" SelectionChanged="Light_Changed">
+                    <ComboBoxItem Content="Static"/>
+                    <ComboBoxItem Content="Breathe"/>
+                    <ComboBoxItem Content="Twinkle"/>
+                    <ComboBoxItem Content="Fade"/>
+                    <ComboBoxItem Content="Temperature (Inverter)"/>
+                    <ComboBoxItem Content="Color by fan speed"/>
+                    <ComboBoxItem Content="Wave (Beta)"/>
+                </ComboBox>
+            </DockPanel>
+            <DockPanel x:Name="ColorRow" Margin="0,0,0,8">
+                <TextBlock Text="Colors" Style="{StaticResource Label}" Width="80"/>
+                <Button x:Name="AddColor" DockPanel.Dock="Right" Content="+" Width="36" Click="AddColor_Click" ToolTip="Add color"/>
+                <CheckBox x:Name="PerZone" DockPanel.Dock="Right" Content="Per zone" MinWidth="0" Click="PerZone_Click" ToolTip="A separate color for each of the 3 LED zones"/>
+                <WrapPanel x:Name="Swatches" VerticalAlignment="Center"/>
+            </DockPanel>
+            <DockPanel x:Name="SpeedRow" Margin="0,0,0,8">
+                <TextBlock Text="Speed" Style="{StaticResource Label}" Width="80"/>
+                <TextBlock x:Name="PeriodText" DockPanel.Dock="Right" Width="44" TextAlignment="Right" VerticalAlignment="Center"/>
+                <Slider x:Name="Period" Minimum="2" Maximum="40" ValueChanged="Period_ValueChanged" IsSnapToTickEnabled="True" TickFrequency="1"
+                        PreviewMouseUp="Light_Commit" KeyUp="Light_Commit" VerticalAlignment="Center" ToolTip="Left = fast, right = slow"/>
+            </DockPanel>
+            <DockPanel>
+                <TextBlock Text="Brightness" Style="{StaticResource Label}" Width="80"/>
+                <TextBlock x:Name="BrightText" DockPanel.Dock="Right" Width="44" TextAlignment="Right" VerticalAlignment="Center"/>
+                <Slider x:Name="Bright" Minimum="1" Maximum="100" ValueChanged="Bright_ValueChanged"
+                        PreviewMouseUp="Light_Commit" KeyUp="Light_Commit" VerticalAlignment="Center"/>
+            </DockPanel>
+        </StackPanel>
+
+        <!-- behaviour -->
+        <TextBlock Text="Behaviour" Style="{StaticResource Section}"/>
+        <CheckBox x:Name="OffOnShutdown" Content="Turn off on shutdown / sleep" Click="Behaviour_Changed"/>
+        <CheckBox x:Name="QuietWhenMedia" Content="Quieter while video / music plays" Click="Behaviour_Changed"/>
+        <CheckBox x:Name="AutoConnect" Content="Auto-connect when in range" Click="Behaviour_Changed"/>
+        <CheckBox x:Name="StartWithWindows" Content="Start with Windows" Click="StartWithWindows_Click"/>
+        <DockPanel Margin="0,8,0,0">
+            <TextBlock Text="On startup" Style="{StaticResource Label}"/>
+            <ComboBox x:Name="OnStartup" SelectionChanged="Behaviour_Changed">
+                <ComboBoxItem Content="Turn on"/>
+                <ComboBoxItem Content="Stay off"/>
+                <ComboBoxItem Content="Keep last state"/>
+            </ComboBox>
+        </DockPanel>
+        <Button x:Name="LinkBtn" Margin="0,14,0,0" HorizontalAlignment="Left" Click="Link_Click"/>
+    </StackPanel>
+</Window>
