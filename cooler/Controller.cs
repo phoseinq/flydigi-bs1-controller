@@ -440,7 +440,7 @@ public sealed class Controller
         if (bootAnimPending)
         {
             bootAnimPending = false;
-            await PlayAnimation(L.BootAnimation(), Lighting.BootPeriod, slots: 8);
+            await PlayAnimation(L.BootAnimation(), Lighting.BootPeriod, slots: 10);  // until the yellow has fully faded out
             waveHue = null;  // fresh start at the target color
             colorShown = false;
             rgbReady = true;
