@@ -35,6 +35,7 @@ public sealed class Controller
     public bool Quiet => S.QuietWhenMedia && MediaPlaying && (rawTemp ?? 0) < 85;
     private bool lightDirty = true, startupPending = true, poweringDown, connectRequested, justConnected;
     private bool bootAnimPending = true;  // played once per app start (= per Windows logon)
+    private bool reopen;  // the link dropped while the cooler was on: if it comes back off, power was lost
     private bool rgbReady;  // boot animation just left RGB on: the wave's first send goes straight in
     private readonly SemaphoreSlim tickGate = new(1, 1);
     private TaskCompletionSource wake = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -51,7 +52,7 @@ public sealed class Controller
         Dev.ConnectionChanged += () =>
         {
             if (Dev.Connected) justConnected = true;
-            else { DeviceOpen = null; DeviceMode = -2; CurrentRpm = TargetRpm = 0; }
+            else { reopen = DeviceOpen == true; DeviceOpen = null; DeviceMode = -2; CurrentRpm = TargetRpm = 0; }
             Changed?.Invoke();
             Kick();
         };
@@ -202,7 +203,12 @@ public sealed class Controller
                     if (S.OnStartup != StartupMode.Keep) { S.SoftOff = S.OnStartup == StartupMode.Off; S.Save(); }
                     if (S.SoftOff || !S.Light.On) bootAnimPending = false;  // after the rule: it may turn us on
                     Log.Write($"startup rule {S.OnStartup} => {(S.SoftOff ? "off" : "on")}");
+                    reopen = true;  // app start: the rule decides, not a leftover button press
                 }
+                // a power cut leaves the cooler off until its button is pressed; switching it off with the
+                // button while connected never gets here, so that choice is still respected
+                if (reopen && DeviceOpen == false && !S.SoftOff) await OpenAsync();
+                reopen = false;
             }
             else if (wasClosed && DeviceOpen == true && S.SoftOff)
             {
@@ -504,6 +510,14 @@ public sealed class Controller
             else if (!await Dev.AckAsync(71, chunk)) { Log.Write($"light chunk {i} failed"); return false; }
         }
         return await Dev.AckAsync(67);
+    }
+
+    /// Cmd 5 (no payload) switches a button-off cooler on, like its power button (tested 2026-10-12).
+    private async Task OpenAsync()
+    {
+        var r = await Dev.SendAsync(C.OpenDevice);
+        if (await Dev.SendAsync(C.IsOpen) is [var open, ..]) DeviceOpen = open == 1;
+        Log.Write($"open device: reply {(r is null ? "-" : Convert.ToHexString(r))}, open={DeviceOpen}");
     }
 
     /// Fan stop + lights off. Smart mode never goes below 1300 rpm, so leave it and use manual gear 0.
