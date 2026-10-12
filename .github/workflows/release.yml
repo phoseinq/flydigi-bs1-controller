@@ -1,0 +1,42 @@
+name: Release
+
+# Push a tag like v1.2.0: builds the installer and attaches it to that release
+# (creates the release if it doesn't exist yet). Manual runs only build it as an artifact.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install Inno Setup
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+      - name: Build installer
+        run: |
+          $v = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '' }
+          ./installer/build.ps1 -Version $v
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer
+          path: installer/out/*.exe
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $exe = (Get-ChildItem installer/out/*.exe).FullName
+          gh release view $tag *> $null
+          if ($LASTEXITCODE) { gh release create $tag $exe --title $tag --generate-notes }
+          else { gh release upload $tag $exe --clobber }
+          if ($LASTEXITCODE) { throw 'release upload failed' }

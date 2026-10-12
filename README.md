@@ -1,8 +1,9 @@
 <p align="center">
-  <img src="docs/banner.svg" alt="Flydigi BS1 Controller" width="100%">
+  <img src="docs/hero.svg" alt="Flydigi BS1 Controller" width="100%">
 </p>
 
 <p align="center">
+  <a href="../../actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/phoseinq/flydigi-bs1-controller/ci.yml?branch=main&style=flat-square&label=build" alt="Build"></a>
   <a href="../../releases/latest"><img src="https://img.shields.io/github/v/release/phoseinq/flydigi-bs1-controller?style=flat-square&color=00b3ff" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=flat-square&logo=windows&logoColor=white" alt="Windows 10 | 11">
   <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10">
@@ -99,6 +100,8 @@ dotnet build cooler -c Release
 ```
 
 The installer is written to `installer\out\`.
+
+Every push to `main` is built and self-tested by [CI](.github/workflows/ci.yml). Pushing a tag like `v1.2.0` builds the installer with that version and attaches it to the release ([release workflow](.github/workflows/release.yml)).
 
 ## ⚠️ Disclaimer
 
