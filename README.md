@@ -16,22 +16,22 @@
 </p>
 
 <p align="center">
-  <a href="../../releases/latest"><b>Download</b></a> ·
-  <a href="#features">Features</a> ·
-  <a href="#install">Install</a> ·
-  <a href="#troubleshooting">Troubleshooting</a> ·
-  <a href="#build-from-source">Build</a>
+  <a href="../../releases/latest"><b>⬇️ Download</b></a> ·
+  <a href="#-features">Features</a> ·
+  <a href="#-install">Install</a> ·
+  <a href="#-troubleshooting">Troubleshooting</a> ·
+  <a href="#️-build-from-source">Build</a>
 </p>
 
-## Features
+## ✨ Features
 
-- **Fan control:** follow CPU/GPU temperature using an editable fan curve, or run at a fixed speed.
-- **Quieter media playback:** optionally reduce fan noise during video or music.
-- **Lighting:** static, breathe, twinkle, fade, wave, or a steady color that follows fan speed, from blue when quiet to red at full speed. Adjust brightness and colors, with optional per-zone colors.
-- **Power management:** turn the cooler off when Windows shuts down or sleeps. At logon, turn it on, keep it off, or restore its last state.
-- **Automatic connection:** connect when the cooler is in range.
+- 🌀 **Fan control:** follow CPU/GPU temperature using an editable fan curve, or run at a fixed speed.
+- 🔇 **Quieter media playback:** optionally reduce fan noise during video or music.
+- 🌈 **Lighting:** static, breathe, twinkle, fade, wave, or a steady color that follows fan speed, from blue when quiet to red at full speed. Adjust brightness and colors, with optional per-zone colors.
+- 🔌 **Power management:** turn the cooler off when Windows shuts down or sleeps. At logon, turn it on, keep it off, or restore its last state.
+- 📶 **Automatic connection:** connect when the cooler is in range.
 
-## Requirements
+## 📋 Requirements
 
 - Windows 10 version 2004 or newer, x64.
 - Bluetooth LE support.
@@ -40,7 +40,7 @@
 
 The app has been tested on the BS1. The EVA edition advertises the same Bluetooth name and protocol but has **not been tested**.
 
-## Install
+## 📦 Install
 
 1. Close Flydigi Space Station and disable it in Windows startup settings. Only one app can hold the cooler's Bluetooth connection at a time.
 2. Download `BS1Cooler-Setup-x.y.z.exe` from the [latest release](../../releases/latest).
@@ -50,7 +50,7 @@ The installer includes the .NET runtime, so nothing else needs to be installed.
 
 Setup creates a logon task that starts the app with administrator rights, without a UAC prompt at each logon. These rights are needed to read CPU/GPU temperatures.
 
-## Usage
+## 🛠️ Usage
 
 Right-click the tray icon to open the settings window, turn the cooler on or off, or exit.
 
@@ -72,7 +72,7 @@ Settings and logs are stored in `%APPDATA%\BS1Cooler`:
 
 To uninstall, open Windows **Installed apps** and remove the app.
 
-## Troubleshooting
+## 🩺 Troubleshooting
 
 ### The cooler does not connect
 
@@ -86,7 +86,7 @@ Temperature monitoring requires administrator rights. Setup configures the app t
 
 Temperatures are read using [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor). Windows Defender flags its WinRing0 driver on some PCs. If the driver is blocked, fan control still works, but temperature readings may be unavailable. Use a fixed fan speed if temperature monitoring is unavailable.
 
-## Build from source
+## 🏗️ Build from source
 
 Install the .NET 10 SDK and [Inno Setup 6](https://jrsoftware.org/isinfo.php), then run these commands from the repository root:
 
@@ -100,10 +100,10 @@ dotnet build cooler -c Release
 
 The installer is written to `installer\out\`.
 
-## Disclaimer
+## ⚠️ Disclaimer
 
 This is an unofficial project and is not affiliated with Flydigi.
 
-## License
+## 📄 License
 
 [MIT](LICENSE)
