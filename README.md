@@ -1,6 +1,27 @@
-# Flydigi BS1 Controller
+<p align="center">
+  <img src="docs/banner.svg" alt="Flydigi BS1 Controller" width="100%">
+</p>
 
-A small Windows tray app for controlling the **Flydigi BS1** laptop cooler over Bluetooth LE. A lighter replacement for Flydigi Space Station.
+<p align="center">
+  <a href="../../releases/latest"><img src="https://img.shields.io/github/v/release/phoseinq/flydigi-bs1-controller?style=flat-square&color=00b3ff" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=flat-square&logo=windows&logoColor=white" alt="Windows 10 | 11">
+  <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10">
+  <img src="https://img.shields.io/badge/Bluetooth-LE-0082FC?style=flat-square&logo=bluetooth&logoColor=white" alt="Bluetooth LE">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/phoseinq/flydigi-bs1-controller?style=flat-square&color=ffc400" alt="License"></a>
+</p>
+
+<p align="center">
+  A small Windows tray app for controlling the <b>Flydigi BS1</b> laptop cooler over Bluetooth LE.<br>
+  A lighter replacement for Flydigi Space Station.
+</p>
+
+<p align="center">
+  <a href="../../releases/latest"><b>Download</b></a> ·
+  <a href="#features">Features</a> ·
+  <a href="#install">Install</a> ·
+  <a href="#troubleshooting">Troubleshooting</a> ·
+  <a href="#build-from-source">Build</a>
+</p>
 
 ## Features
 
