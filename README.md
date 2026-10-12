@@ -101,7 +101,7 @@ dotnet build cooler -c Release
 
 The installer is written to `installer\out\`.
 
-Every push to `main` is built and self-tested by [CI](.github/workflows/ci.yml). Pushing a tag like `v1.2.0` builds the installer with that version and attaches it to the release ([release workflow](.github/workflows/release.yml)).
+Every push to `main` is built and self-tested by [CI](.github/workflows/ci.yml). Pushing a tag like `v1.2.0` builds the installer with that version and attaches it to that tag's release ([release workflow](.github/workflows/release.yml)).
 
 ## ⚠️ Disclaimer
 

@@ -1,7 +1,7 @@
 name: Release
 
-# Push a tag like v1.2.0: builds the installer and attaches it to that release
-# (creates the release if it doesn't exist yet). Manual runs only build it as an artifact.
+# Push a tag like v1.2.0: builds the installer and attaches it to that tag's release.
+# Manual runs (and tags without a release) only keep it as an artifact.
 on:
   push:
     tags: ['v*']
@@ -36,7 +36,9 @@ jobs:
         run: |
           $tag = $env:GITHUB_REF_NAME
           $exe = (Get-ChildItem installer/out/*.exe).FullName
+          # the release itself is created by hand (gh release create) so it stays authored by the owner;
+          # without one, the installer is only kept as the run's artifact
           gh release view $tag *> $null
-          if ($LASTEXITCODE) { gh release create $tag $exe --title $tag --generate-notes }
-          else { gh release upload $tag $exe --clobber }
+          if ($LASTEXITCODE) { "::notice::no release $tag yet: installer kept as artifact"; exit 0 }
+          gh release upload $tag $exe --clobber
           if ($LASTEXITCODE) { throw 'release upload failed' }
