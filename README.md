@@ -61,7 +61,7 @@ Install with one command (the latest release, for your user; it asks for `sudo` 
 curl -fsSL https://raw.githubusercontent.com/phoseinq/flydigi-bs1-controller/main/install.sh | sh
 ```
 
-Run it again to update; add `-s -- --uninstall` after `sh` to remove. Or download `BS1Cooler-x.y.z-linux-x64.tar.gz` / `-osx-arm64` / `-osx-x64` from the [latest release](../../releases/latest) and run `BS1Cooler`. The app can start itself at login (Settings).
+Run it again to update; add `-s -- --uninstall` after `sh` to remove. On Ubuntu, Debian or Fedora you can instead install the release's package: `sudo apt install ./bs1cooler_x.y.z_amd64.deb` or `sudo dnf install ./bs1cooler-x.y.z-1.x86_64.rpm`. Or download `BS1Cooler-x.y.z-linux-x64.tar.gz` / `-osx-arm64` / `-osx-x64` from the [latest release](../../releases/latest) and run `BS1Cooler`. The app can start itself at login (Settings).
 
 | | Linux | macOS |
 | --- | --- | --- |

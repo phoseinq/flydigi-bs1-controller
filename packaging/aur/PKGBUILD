@@ -1,0 +1,37 @@
+# Maintainer: phoseinq <129876188+phoseinq@users.noreply.github.com>
+pkgname=bs1cooler-bin
+pkgver=2.0.2
+pkgrel=1
+pkgdesc="Fan and lights for the Flydigi BS1 laptop cooler (tray app)"
+arch=('x86_64')
+url="https://github.com/phoseinq/flydigi-bs1-controller"
+license=('MIT')
+depends=('fontconfig' 'libx11' 'libice' 'libsm' 'icu')
+optdepends=('bluez: connect over Bluetooth'
+            'libpulse: quiet mode while sound plays or the mic is in use (pactl)'
+            'nvidia-utils: NVIDIA GPU temperature and load')
+provides=('bs1cooler')
+conflicts=('bs1cooler')
+options=('!strip' '!debug')
+source=("$url/releases/download/v$pkgver/BS1Cooler-$pkgver-linux-x64.tar.gz"
+        "LICENSE-$pkgver::https://raw.githubusercontent.com/phoseinq/flydigi-bs1-controller/v$pkgver/LICENSE")
+sha256sums=('SKIP_UNTIL_RELEASE'
+            'SKIP_UNTIL_RELEASE')
+
+package() {
+  install -d "$pkgdir/opt" "$pkgdir/usr/bin"
+  cp -r BS1Cooler "$pkgdir/opt/bs1cooler"
+  install -Dm644 "$pkgdir/opt/bs1cooler/99-bs1cooler.rules" "$pkgdir/usr/lib/udev/rules.d/99-bs1cooler.rules"
+  rm "$pkgdir/opt/bs1cooler/99-bs1cooler.rules"
+  ln -s /opt/bs1cooler/Bs1Cooler "$pkgdir/usr/bin/bs1cooler"
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/bs1cooler.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=BS1 Cooler
+Comment=Fan and lights for the Flydigi BS1 laptop cooler
+Exec=/opt/bs1cooler/Bs1Cooler
+Icon=/opt/bs1cooler/cooler.ico
+Categories=Utility;System;
+DESKTOP
+  install -Dm644 "LICENSE-$pkgver" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
