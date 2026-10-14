@@ -92,3 +92,6 @@ jobs:
             echo "::notice::no release $GITHUB_REF_NAME yet: files kept as artifacts"; exit 0
           fi
           gh release upload "$GITHUB_REF_NAME" dist/*/* -R "$GITHUB_REPOSITORY" --clobber
+          # a fixed name too, so releases/latest/download/BS1Cooler-Setup.exe always points at the newest installer
+          cp dist/windows/BS1Cooler-Setup-*.exe BS1Cooler-Setup.exe
+          gh release upload "$GITHUB_REF_NAME" BS1Cooler-Setup.exe -R "$GITHUB_REPOSITORY" --clobber
