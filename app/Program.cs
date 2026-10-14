@@ -55,6 +55,14 @@ public static class Program
             Console.WriteLine("flash ok");
             return 0;
         }
+#if !WINDOWS
+        if (args.Contains("--usb-probe"))  // CI (macOS): libusb loads and lists devices
+        {
+            string r = LibusbPort.Probe();
+            Console.WriteLine(r);
+            return r.StartsWith("libusb ok") ? 0 : 1;
+        }
+#endif
         if (args.Contains("--signals"))  // dev: quiet-mode inputs now, and who holds a microphone
         {
 #if !WINDOWS

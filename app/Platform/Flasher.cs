@@ -46,15 +46,14 @@ public static class Flasher
         Log.Write($"flash {e}: done");
     }
 
-    /// Windows: WCH's driver. Linux: usbfs, no driver needed (the udev rule gives access).
+    /// Windows: WCH's driver. Linux: usbfs, no driver needed (the udev rule gives access). macOS: libusb (experimental).
 #if WINDOWS
     private static IIspPort? OpenPort() => Ch375Port.Open();
 #else
-    private static IIspPort? OpenPort() => OperatingSystem.IsLinux() ? UsbfsPort.Open() : null;
+    private static IIspPort? OpenPort() => OperatingSystem.IsLinux() ? UsbfsPort.Open() : LibusbPort.Open();
 #endif
 
-    /// Flashing works on Windows and Linux (macOS: not yet).
-    public static bool Supported => OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
+    public static bool Supported => OperatingSystem.IsWindows() || OperatingSystem.IsLinux() || OperatingSystem.IsMacOS();
 
     /// Plugged in, in bootloader mode, but Windows has no driver bound to it.
     private static bool BootloaderWithoutDriver()

@@ -30,3 +30,9 @@ jobs:
         run: |
           dll=$(find app/bin/Release/${{ matrix.tfm }} -name Bs1Cooler.dll | head -1)
           dotnet "$dll" --selftest
+      - name: libusb (macOS firmware updates)
+        if: runner.os == 'macOS'
+        run: |
+          brew list libusb >/dev/null 2>&1 || brew install libusb
+          dll=$(find app/bin/Release/${{ matrix.tfm }} -name Bs1Cooler.dll | head -1)
+          dotnet "$dll" --usb-probe

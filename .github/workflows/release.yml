@@ -30,7 +30,39 @@ jobs:
           name: windows
           path: installer/out/*.exe
 
+  libusb:
+    # macOS firmware updates go through libusb: built from source as one universal dylib, shipped next to the app
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build libusb
+        run: |
+          v=1.0.27
+          curl -fsSL https://github.com/libusb/libusb/releases/download/v$v/libusb-$v.tar.bz2 | tar xj
+          for a in arm64 x86_64; do
+            mkdir b-$a && (cd b-$a && ../libusb-$v/configure --host=$a-apple-darwin --disable-static -q               CFLAGS="-arch $a -mmacosx-version-min=11.0 -O2" LDFLAGS="-arch $a" && make -j4 -s)
+          done
+          mkdir libusb
+          lipo -create b-arm64/libusb/.libs/libusb-1.0.0.dylib b-x86_64/libusb/.libs/libusb-1.0.0.dylib -output libusb/libusb-1.0.dylib
+          install_name_tool -id @rpath/libusb-1.0.dylib libusb/libusb-1.0.dylib
+          codesign -s - -f libusb/libusb-1.0.dylib
+          cp libusb-$v/COPYING libusb/libusb-COPYING.txt
+          lipo -info libusb/libusb-1.0.dylib
+      - name: The app loads the bundled copy
+        run: |
+          dotnet publish app -f net10.0 -r osx-arm64 --self-contained true -c Release -o probe
+          cp libusb/libusb-1.0.dylib probe/
+          ./probe/Bs1Cooler --usb-probe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libusb
+          path: libusb
+
   unix:
+    needs: libusb
     strategy:
       fail-fast: false
       matrix:
@@ -41,10 +73,16 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
+      - uses: actions/download-artifact@v4
+        if: startsWith(matrix.rid, 'osx')
+        with:
+          name: libusb
+          path: libusb
       - name: Publish
         run: |
           v=${GITHUB_REF_NAME#v}; [ "$GITHUB_REF_TYPE" = tag ] || v=2.0.0
           dotnet publish app -f net10.0 -r ${{ matrix.rid }} --self-contained true -c Release -p:Version=$v -o out/BS1Cooler
+          if [ -d libusb ]; then cp libusb/* out/BS1Cooler/; fi
           tar -C out -czf BS1Cooler-$v-${{ matrix.rid }}.tar.gz BS1Cooler
           echo "VERSION=$v" >> "$GITHUB_ENV"
       - name: deb and rpm packages
@@ -91,6 +129,7 @@ jobs:
           if ! gh release view "$GITHUB_REF_NAME" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::notice::no release $GITHUB_REF_NAME yet: files kept as artifacts"; exit 0
           fi
+          rm -rf dist/libusb  # only bundled inside the macOS archives
           gh release upload "$GITHUB_REF_NAME" dist/*/* -R "$GITHUB_REPOSITORY" --clobber
           # a fixed name too, so releases/latest/download/BS1Cooler-Setup.exe always points at the newest installer
           cp dist/windows/BS1Cooler-Setup-*.exe BS1Cooler-Setup.exe
