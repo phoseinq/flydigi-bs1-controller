@@ -37,9 +37,15 @@ public static class Program
         }
         if (args.Contains("--signals"))  // dev: quiet-mode inputs now, and who holds a microphone
         {
+#if !WINDOWS
+            var t = OperatingSystem.IsMacOS() ? (ITemps)new MacTemps() : new LinuxTemps();
+            t.Read(); Thread.Sleep(500); t.Read();
+            Console.WriteLine($"{(OperatingSystem.IsMacOS() ? MacSignals.Read() : LinuxSignals.Read())}; load={t.Load:0}%; parts={string.Join(", ", t.Parts.Select(p => $"{p.Kind} {p.Name} {p.Temp:0}"))}");
+#else
             Console.WriteLine($"{WinSignals.Read()}; sound={WinMedia.SoundPlaying()}");
             WinMedia.Trace = []; WinMedia.MicInUse();
             foreach (var pid in WinMedia.Trace) Console.WriteLine(pid == 0 ? "mic device checked" : $"mic: {pid} {System.Diagnostics.Process.GetProcessById((int)pid).ProcessName}");
+#endif
             return 0;
         }
         bool smoke = args.Contains("--smoke");  // dev: open every page, no device, exit; catches XAML/style errors
@@ -47,18 +53,28 @@ public static class Program
         if (!first) return 0;  // ponytail: second launch just exits; the tray icon is the way back in
 
         Controller.DevHooks = args.Contains("--dev");
-        var ctl = new Controller(new Platform { Ble = new WinBle(), Temps = () => new Temps(), MediaPlaying = WinMedia.IsPlaying, Signals = WinSignals.Read });
-        Microsoft.Win32.SystemEvents.PowerModeChanged += (_, e) =>
-        {
-            if (e.Mode == Microsoft.Win32.PowerModes.Suspend) ctl.Suspend();
-            else if (e.Mode == Microsoft.Win32.PowerModes.Resume) ctl.Resume();
-        };
+        var ctl = new Controller(OsPlatform());
+        if (OperatingSystem.IsWindows())
+            Microsoft.Win32.SystemEvents.PowerModeChanged += (_, e) =>
+            {
+                if (e.Mode == Microsoft.Win32.PowerModes.Suspend) ctl.Suspend();
+                else if (e.Mode == Microsoft.Win32.PowerModes.Resume) ctl.Resume();
+            };
 
         return AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .AfterSetup(b => Setup((IClassicDesktopStyleApplicationLifetime)b.Instance!.ApplicationLifetime!, ctl, args))
             .StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
     }
+
+    private static Platform OsPlatform() =>
+#if WINDOWS
+        new() { Ble = new WinBle(), Temps = () => new Temps(), MediaPlaying = WinMedia.IsPlaying, Signals = WinSignals.Read };
+#else
+        OperatingSystem.IsMacOS()
+            ? new() { Ble = new NoBle(), Temps = () => new MacTemps(), Signals = MacSignals.Read }
+            : new() { Ble = new LinuxBle(), Temps = () => new LinuxTemps(), MediaPlaying = LinuxSignals.SoundPlaying, Signals = LinuxSignals.Read };
+#endif
 
     private static void Setup(IClassicDesktopStyleApplicationLifetime life, Controller ctl, string[] args)
     {
@@ -85,10 +101,10 @@ public static class Program
         });
 
         // Windows shutdown/logoff: first in line, and hold the session end while the cooler is switched off
-        SetProcessShutdownParameters(0x3FF, 0);
+        if (OperatingSystem.IsWindows()) SetProcessShutdownParameters(0x3FF, 0);
         life.ShutdownRequested += (_, e) =>
         {
-            var hwnd = win.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+            var hwnd = OperatingSystem.IsWindows() ? win.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero : IntPtr.Zero;
             if (hwnd != IntPtr.Zero) ShutdownBlockReasonCreate(hwnd, Tx.Tr("Turning off the cooler"));
             ctl.PowerDown("session ending");
             if (hwnd != IntPtr.Zero) ShutdownBlockReasonDestroy(hwnd);

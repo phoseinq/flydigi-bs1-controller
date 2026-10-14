@@ -76,6 +76,7 @@ public static class Tx
         // settings
         ["Startup & behavior"] = ("شروع و رفتار", "启动与行为"),
         ["Start with Windows"] = ("اجرا با ویندوز", "随 Windows 启动"),
+        ["Start at login"] = ("اجرا موقع ورود", "登录时启动"),
         ["Runs in the tray when you sign in"] = ("بعد از ورود به ویندوز کنار ساعت اجرا می‌شه", "登录后在托盘中运行"),
         ["When the app opens"] = ("وقتی برنامه باز می‌شه", "应用启动时"),
         ["What the cooler does"] = ("کولر چی کار کنه", "散热器的状态"),
@@ -106,7 +107,7 @@ public static class Tx
         ["Help & about"] = ("کمک و درباره", "帮助与关于"),
         ["Report a problem"] = ("گزارش مشکل", "报告问题"),
         ["Report"] = ("گزارش", "报告"),
-        ["Copies a report and opens the log folder"] = ("یه گزارش کپی می‌کنه و پوشه‌ی لاگ رو باز می‌کنه", "复制一份报告并打开日志文件夹"),
+        ["Copies a report and opens a new GitHub issue"] = ("یه گزارش کپی می‌کنه و صفحه‌ی issue جدید تو GitHub رو باز می‌کنه", "复制一份报告并打开新的 GitHub 问题"),
         ["Debug tools"] = ("ابزار دیباگ", "调试工具"),
         ["Open log"] = ("باز کردن لاگ", "打开日志"),
         ["Log all sensors"] = ("ثبت همه‌ی سنسورها در لاگ", "记录所有传感器"),

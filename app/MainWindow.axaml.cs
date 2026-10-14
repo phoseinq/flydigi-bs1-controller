@@ -88,7 +88,8 @@ public partial class MainWindow : Window
         foreach (var box in new[] { NightFrom, NightTo }) box.LostFocus += (_, _) => Behaviour();
         OnStartup.SelectionChanged += (_, _) => Behaviour();
         StartWithWindows.IsCheckedChanged += async (_, _) => { if (!loading) await SetStartWithWindows(StartWithWindows.IsChecked == true); };
-        ReportBtn.Click += async (_, _) => { await CopyReport(); Open(Settings.Dir); };
+        // the report goes on the clipboard: paste it into the new issue
+        ReportBtn.Click += async (_, _) => { await CopyReport(); Open("https://github.com/phoseinq/flydigi-bs1-controller/issues/new"); };
         CopyReportBtn.Click += async (_, _) => await CopyReport();
         OpenLogBtn.Click += (_, _) => Open(System.IO.Path.Combine(Settings.Dir, "bs1cooler.log"));
         DumpSensorsBtn.Click += (_, _) => Log.Write("all temps: " + ctl.SensorDump());
@@ -124,6 +125,7 @@ public partial class MainWindow : Window
         AutoConnect.IsChecked = S.AutoConnect;
         OnStartup.SelectedIndex = (int)S.OnStartup;
         EditionBox.SelectedIndex = (int)S.Edition;
+        if (!OperatingSystem.IsWindows()) StartTitle.Text = Tx.Tr("Start at login");
         DebugTools.IsVisible = S.Edition == Edition.Beta;
         AboutText.Text = $"BS1 Cooler {Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)}";
         UpdateVisibility();
@@ -320,16 +322,47 @@ public partial class MainWindow : Window
         ctl.Save();
     }
 
-    // logon task with highest privileges: CPU temperature needs admin, and no UAC prompt at sign-in
+    // Windows: logon task with highest privileges (CPU temperature needs admin, and no UAC prompt at sign-in).
+    // Linux: an XDG autostart entry. macOS: a LaunchAgent.
+    private static readonly string LinuxEntry = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "autostart", "bs1cooler.desktop");
+    private static readonly string MacAgent = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "LaunchAgents", "com.phoseinq.bs1cooler.plist");
+
     private async Task SetStartWithWindows(bool want)
     {
         StartWithWindows.IsEnabled = false;
-        await Task.Run(() => RunPowerShell(want
-            ? $"Register-ScheduledTask -TaskName '{TaskName}' -Force -RunLevel Highest " +
-              $"-Action (New-ScheduledTaskAction -Execute '{Environment.ProcessPath}' -Argument '--tray') " +
-              "-Trigger (New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME) " +
-              "-Settings (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit 0)"
-            : $"Unregister-ScheduledTask -TaskName '{TaskName}' -Confirm:$false"));
+        await Task.Run(() =>
+        {
+            if (OperatingSystem.IsWindows())
+                RunPowerShell(want
+                    ? $"Register-ScheduledTask -TaskName '{TaskName}' -Force -RunLevel Highest " +
+                      $"-Action (New-ScheduledTaskAction -Execute '{Environment.ProcessPath}' -Argument '--tray') " +
+                      "-Trigger (New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME) " +
+                      "-Settings (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit 0)"
+                    : $"Unregister-ScheduledTask -TaskName '{TaskName}' -Confirm:$false");
+            else
+            {
+                string file = OperatingSystem.IsMacOS() ? MacAgent : LinuxEntry;
+                if (!want) { System.IO.File.Delete(file); return; }
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file)!);
+                System.IO.File.WriteAllText(file, OperatingSystem.IsMacOS()
+                    ? $"""
+                      <?xml version="1.0" encoding="UTF-8"?>
+                      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                      <plist version="1.0"><dict>
+                        <key>Label</key><string>com.phoseinq.bs1cooler</string>
+                        <key>ProgramArguments</key><array><string>{Environment.ProcessPath}</string><string>--tray</string></array>
+                        <key>RunAtLoad</key><true/>
+                      </dict></plist>
+                      """
+                    : $"""
+                      [Desktop Entry]
+                      Type=Application
+                      Name=BS1 Cooler
+                      Exec="{Environment.ProcessPath}" --tray
+                      X-GNOME-Autostart-enabled=true
+                      """);
+            }
+        });
         bool on = await Task.Run(TaskExists);
         loading = true;
         StartWithWindows.IsChecked = on;
@@ -340,6 +373,7 @@ public partial class MainWindow : Window
 
     private static bool TaskExists()  // schtasks answers in ~50 ms; PowerShell takes a second
     {
+        if (!OperatingSystem.IsWindows()) return System.IO.File.Exists(OperatingSystem.IsMacOS() ? MacAgent : LinuxEntry);
         var p = Process.Start(new ProcessStartInfo("schtasks.exe", $"/Query /TN \"{TaskName}\"") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true })!;
         p.WaitForExit(5000);
         return p.ExitCode == 0;

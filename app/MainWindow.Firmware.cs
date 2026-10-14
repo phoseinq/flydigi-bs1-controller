@@ -48,7 +48,7 @@ public partial class MainWindow
 
     /// Official firmware older than 0.0.6.02, or our firmware older than the one in this app.
     /// Official edition: only an old official firmware, or ours to take back. Custom/Beta: anything older than ours.
-    private bool NeedsUpdate => ctl.Dev.Connected && (S.Edition == Edition.Official
+    private bool NeedsUpdate => OperatingSystem.IsWindows() && ctl.Dev.Connected && (S.Edition == Edition.Official
         ? ctl.FirmwareOld || ctl.FirmwarePatch > 0
         : ctl.FirmwareOld || ctl.FirmwarePatch is > 0 and var v && v < CustomVersion);
 
@@ -57,7 +57,7 @@ public partial class MainWindow
         UpdateBar.IsOpen = NeedsUpdate && !UpdatePage.IsVisible;
         if (ctl.FirmwarePatch > 0 && ctl.FirmwarePatch < CustomVersion)
             (UpdateBar.Title, UpdateBar.Message) = (Tx.Tr("Firmware update"), Tx.Tr("Version {0} of the BS1 Cooler firmware is ready.", CustomVersion));
-        UpdateBtn.IsEnabled = ctl.Dev.Connected && !flashing;
+        UpdateBtn.IsEnabled = OperatingSystem.IsWindows() && !flashing;  // flashing needs WCH's Windows driver
         FirmwareDesc.Text = !ctl.Dev.Connected ? Tx.Tr("Cooler not connected")
             : ctl.FirmwarePatch > 0 ? $"BS1 Cooler {ctl.FirmwarePatch} · Flydigi {ctl.FirmwareVersion}"
             : Tx.Tr("Official Flydigi {0}", ctl.FirmwareVersion);

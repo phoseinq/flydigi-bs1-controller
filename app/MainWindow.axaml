@@ -187,7 +187,7 @@
               </StackPanel>
               <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
                 <ic:SymbolIcon Symbol="Rocket" />
-                <StackPanel Grid.Column="1"><TextBlock Text="Start with Windows" /><TextBlock Classes="desc" Text="Runs in the tray when you sign in" /></StackPanel>
+                <StackPanel Grid.Column="1"><TextBlock Name="StartTitle" Text="Start with Windows" /><TextBlock Classes="desc" Text="Runs in the tray when you sign in" /></StackPanel>
                 <ToggleSwitch Grid.Column="2" Name="StartWithWindows" OnContent="" OffContent="" />
               </Grid>
               <Separator />
@@ -357,7 +357,7 @@
               </StackPanel>
               <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
                 <ic:SymbolIcon Symbol="Bug" />
-                <StackPanel Grid.Column="1"><TextBlock Text="Report a problem" /><TextBlock Classes="desc" Text="Copies a report and opens the log folder" /></StackPanel>
+                <StackPanel Grid.Column="1"><TextBlock Text="Report a problem" /><TextBlock Classes="desc" Text="Copies a report and opens a new GitHub issue" /></StackPanel>
                 <Button Grid.Column="2" Name="ReportBtn" Content="Report" />
               </Grid>
               <Separator />

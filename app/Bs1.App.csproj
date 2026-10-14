@@ -2,12 +2,13 @@
   <!-- BS1 Cooler: Avalonia UI (Fluent 2 look) over core\ (protocol, fan and light logic). -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <!-- the -windows build gets WinRT Bluetooth and media sessions; plain net10.0 is Linux and macOS -->
+    <TargetFrameworks>net10.0-windows10.0.19041.0;net10.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>Bs1Cooler.App</RootNamespace>
     <AssemblyName>Bs1Cooler</AssemblyName>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationManifest Condition="'$(TargetFramework)' != 'net10.0'">app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\cooler.ico</ApplicationIcon>
     <Version>2.0.0</Version>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
@@ -19,16 +20,19 @@
     <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.4" />
     <PackageReference Include="FluentAvaloniaUI" Version="3.1.0" />
     <PackageReference Include="FluentIcons.Avalonia" Version="2.1.344" />
-    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" />
+    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" Condition="'$(TargetFramework)' != 'net10.0'" />
+    <PackageReference Include="Linux.Bluetooth" Version="5.67.1" />
     <PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.0" />
     <PackageReference Include="System.Management" Version="10.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\core\Bs1.Core.csproj" />
+    <Compile Remove="Platform\Win*.cs;Platform\Temps.cs" Condition="'$(TargetFramework)' == 'net10.0'" />
     <AvaloniaResource Include="Assets\cooler.ico" />
     <!-- sealed images (FirmwareBox); made from the plain .bin files by running the app with the seal-firmware flag -->
     <EmbeddedResource Include="..\firmware\official.bin.sealed" LogicalName="official.bin" WithCulture="false" />
     <EmbeddedResource Include="..\firmware\custom.bin.sealed" LogicalName="custom.bin" WithCulture="false" />
+    <None Include="Platform\Linux\99-bs1cooler.rules" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Link="99-bs1cooler.rules" Condition="'$(TargetFramework)' == 'net10.0'" />
     <None Include="Platform\CH375DLL64.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Link="CH375DLL64.dll" />
     <!-- WCH's signed USB driver package for the bootloader, installed with pnputil when missing -->
     <None Update="Platform\ch375driver\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Link="ch375driver\%(Filename)%(Extension)" />
