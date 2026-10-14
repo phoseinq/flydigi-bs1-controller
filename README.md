@@ -6,13 +6,15 @@
   <a href="../../actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/phoseinq/flydigi-bs1-controller/ci.yml?branch=main&style=flat-square&label=build" alt="Build"></a>
   <a href="../../releases/latest"><img src="https://img.shields.io/github/v/release/phoseinq/flydigi-bs1-controller?style=flat-square&color=00b3ff" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?style=flat-square&logo=windows&logoColor=white" alt="Windows 10 | 11">
+  <img src="https://img.shields.io/badge/Linux-x64-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
+  <img src="https://img.shields.io/badge/macOS-Intel%20%7C%20Apple-000000?style=flat-square&logo=apple&logoColor=white" alt="macOS">
   <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&logo=dotnet&logoColor=white" alt=".NET 10">
   <img src="https://img.shields.io/badge/Bluetooth-LE-0082FC?style=flat-square&logo=bluetooth&logoColor=white" alt="Bluetooth LE">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/phoseinq/flydigi-bs1-controller?style=flat-square&color=ffc400" alt="License"></a>
 </p>
 
 <p align="center">
-  A small Windows tray app for controlling the <b>Flydigi BS1</b> laptop cooler over Bluetooth LE or USB.<br>
+  A small desktop app for Windows, Linux and macOS for controlling the <b>Flydigi BS1</b> laptop cooler over Bluetooth LE or USB.<br>
   A lighter replacement for Flydigi Space Station.
 </p>
 

@@ -47,10 +47,10 @@ public partial class MainWindow
     }
 
     /// Official firmware older than 0.0.6.02, or our firmware older than the one in this app.
-    /// Official edition: only an old official firmware, or ours to take back. Custom/Beta: anything older than ours.
+    /// Official edition: only an old official firmware, or ours to take back. Custom/Beta: anything that isn't ours or is older.
     private bool NeedsUpdate => OperatingSystem.IsWindows() && ctl.Dev.Connected && (S.Edition == Edition.Official
         ? ctl.FirmwareOld || ctl.FirmwarePatch > 0
-        : ctl.FirmwareOld || ctl.FirmwarePatch is > 0 and var v && v < CustomVersion);
+        : ctl.FirmwarePatch < CustomVersion);  // ours is the default: official firmware gets it offered too
 
     private void RefreshFirmware()
     {
@@ -58,6 +58,7 @@ public partial class MainWindow
         (UpdateBar.Title, UpdateBar.Message) =
             S.Edition == Edition.Official && ctl.FirmwarePatch > 0 ? (Tx.Tr("Firmware"), Tx.Tr("You chose the official firmware; the cooler runs the BS1 Cooler firmware."))
             : ctl.FirmwarePatch > 0 ? (Tx.Tr("Firmware update"), Tx.Tr("Version {0} of the BS1 Cooler firmware is ready.", CustomVersion))
+            : !ctl.FirmwareOld ? (Tx.Tr("Firmware"), Tx.Tr("The BS1 Cooler firmware is recommended: smooth colors and a power-on animation. You can go back to the official one in Settings."))
             : (Tx.Tr("Firmware update"), Tx.Tr("Your cooler's firmware is old: it can't start by itself after a power cut."));
         UpdateBtn.IsEnabled = OperatingSystem.IsWindows() && !flashing;  // flashing needs WCH's Windows driver
         FirmwareDesc.Text = !ctl.Dev.Connected ? Tx.Tr("Cooler not connected")

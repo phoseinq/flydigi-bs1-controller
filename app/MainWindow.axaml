@@ -293,7 +293,7 @@
                   <TextBlock Name="FirmwareDesc" Classes="desc" Text="–" />
                   <TextBlock Name="FirmwareState" FontSize="12" FontWeight="SemiBold" />
                 </StackPanel>
-                <Button Grid.Column="2" Name="UpdateBtn" Content="Update" />
+                <Button Grid.Column="2" Name="UpdateBtn" Content="Change" />
               </Grid>
               <!-- beta: debug tools -->
               <StackPanel Name="DebugTools" Spacing="6" Margin="0,6,0,0" IsVisible="False">

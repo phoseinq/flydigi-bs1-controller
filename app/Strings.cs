@@ -92,6 +92,10 @@ public static class Tx
         ["USB if the cable carries data, else Bluetooth"] = ("اگه کابل دیتا داشته باشه USB، وگرنه بلوتوث", "数据线可用时用 USB，否则用蓝牙"),
         ["Firmware"] = ("فریم‌ور", "固件"),
         ["Update"] = ("آپدیت", "更新"),
+        ["Change"] = ("تغییر", "更换"),
+        ["The BS1 Cooler firmware is recommended: smooth colors and a power-on animation. You can go back to the official one in Settings."] =
+            ("فریمور BS1 Cooler پیشنهاد می‌شه: رنگ‌های نرم و انیمیشن روشن شدن. هر وقت خواستی از تنظیمات به فریمور اصلی برگرد.",
+             "推荐使用 BS1 Cooler 固件：颜色过渡平滑，并有开机动画。可随时在设置中换回官方固件。"),
         ["Update available"] = ("آپدیت موجوده", "有可用更新"),
         ["Up to date"] = ("به‌روزه", "已是最新"),
         ["Cooler not connected"] = ("کولر وصل نیست", "散热器未连接"),
