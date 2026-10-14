@@ -100,10 +100,9 @@
   <path d="M683 72L779 248L779 301Q767 300 762 289L674 109Q669 94 676 80Z" fill="url(#bn-side)" stroke="#A6B8CA" stroke-opacity=".4"/>
   <path d="M688 110L747 221L745 254L686 140Z" fill="#0B1829"/>
   <g fill="#64EEFF">
-    <path d="M699 159L706 172L706 197L699 184Z"/>
-    <path d="M709 177L716 190L716 219L709 206Z"/>
-    <path d="M719 196L726 209L726 241L719 228Z"/>
-    <path d="M729 215L736 228L736 259L729 246Z"/>
+    <path d="M701 163L708 176L708 202L701 189Z"/>
+    <path d="M714 186L721 199L721 228L714 215Z"/>
+    <path d="M727 210L734 223L734 254L727 241Z"/>
   </g>
   <path d="M699 168L735 238" stroke="#26D6FF" stroke-width="16" opacity=".5" filter="url(#bn-glow)"/>
 
