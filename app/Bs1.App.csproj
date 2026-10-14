@@ -33,6 +33,7 @@
     <!-- sealed images (FirmwareBox); made from the plain .bin files by running the app with the seal-firmware flag -->
     <EmbeddedResource Include="..\firmware\official.bin.sealed" LogicalName="official.bin" WithCulture="false" />
     <EmbeddedResource Include="..\firmware\custom.bin.sealed" LogicalName="custom.bin" WithCulture="false" />
+    <None Include="Assets\cooler.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Link="cooler.ico" Condition="'$(TargetFramework)' == 'net10.0'" />  <!-- icon for the Linux menu entry -->
     <None Include="Platform\Linux\99-bs1cooler.rules" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Link="99-bs1cooler.rules" Condition="'$(TargetFramework)' == 'net10.0'" />
     <None Include="Platform\CH375DLL64.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Link="CH375DLL64.dll" />
     <!-- WCH's signed USB driver package for the bootloader, installed with pnputil when missing -->

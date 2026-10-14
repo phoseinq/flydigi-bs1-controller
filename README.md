@@ -55,7 +55,13 @@ The installer includes the .NET runtime. It creates a logon task that starts the
 
 ## 🐧 Linux and macOS
 
-Download `BS1Cooler-x.y.z-linux-x64.tar.gz` or `-osx-arm64` / `-osx-x64` from the [latest release](../../releases/latest), unpack it, and run `BS1Cooler`. The app can start itself at login (Settings).
+Install with one command (the latest release, for your user; it asks for `sudo` once on Linux, for USB access):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/phoseinq/flydigi-bs1-controller/main/install.sh | sh
+```
+
+Run it again to update; add `-s -- --uninstall` after `sh` to remove. Or download `BS1Cooler-x.y.z-linux-x64.tar.gz` / `-osx-arm64` / `-osx-x64` from the [latest release](../../releases/latest) and run `BS1Cooler`. The app can start itself at login (Settings).
 
 | | Linux | macOS |
 | --- | --- | --- |
@@ -64,7 +70,7 @@ Download `BS1Cooler-x.y.z-linux-x64.tar.gz` or `-osx-arm64` / `-osx-x64` from th
 | Quiet mode | sound and calls (PulseAudio or PipeWire), battery, lock, GNOME Do Not Disturb | battery |
 | Firmware update | from Windows | from Windows |
 
-On **Linux**, allow your user to reach the cooler over USB once:
+With the manual download on **Linux**, allow your user to reach the cooler over USB once:
 
 ```sh
 sudo cp 99-bs1cooler.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger
@@ -72,7 +78,7 @@ sudo cp 99-bs1cooler.rules /etc/udev/rules.d/ && sudo udevadm control --reload &
 
 The tray icon needs a desktop with tray (StatusNotifier) support; on GNOME, the AppIndicator extension.
 
-On **macOS**, the app isn't signed: after unpacking, run `xattr -dr com.apple.quarantine BS1Cooler` once.
+With the manual download on **macOS**, the app isn't signed: after unpacking, run `xattr -dr com.apple.quarantine BS1Cooler` once.
 
 ## 🛠️ Usage
 
