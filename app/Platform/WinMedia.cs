@@ -12,23 +12,37 @@ public static class WinMedia
 {
     private static GlobalSystemMediaTransportControlsSessionManager? media;
 
+    private static string? lastSource;
+
     public static async Task<bool> IsPlaying()
     {
+        string? source = null;
         try
         {
             media ??= await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
-            if (media.GetSessions().Any(s => s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing))
-                return true;
+            source = media.GetSessions().FirstOrDefault(s => s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
+                ?.SourceAppUserModelId is { } app ? "media session " + app : null;
         }
         catch { }  // no media sessions (Windows Server, N editions): the meters still work
-        return SoundPlaying();
+        source ??= SoundSource();
+        // which app it was, once per change: "quiet: Media" alone doesn't say what made the sound
+        if (source != null && source != lastSource) { lastSource = source; Log.Write("sound from " + source); }
+        return source != null;
     }
 
     /// Any app (not system sounds, not us) with audio above silence on any active output device.
-    public static bool SoundPlaying() => AnySession(render: true);
+    public static bool SoundPlaying() => SoundSource() != null;
+
+    private static string? SoundSource() => AnySession(render: true) is uint pid ? "app " + ProcessName(pid) : null;
+
+    private static string ProcessName(uint pid)
+    {
+        try { return System.Diagnostics.Process.GetProcessById((int)pid).ProcessName; }
+        catch { return pid.ToString(); }
+    }
 
     /// Any app recording from any microphone right now (a call, even while nobody talks).
-    public static bool MicInUse() => AnySession(render: false);
+    public static bool MicInUse() => AnySession(render: false) != null;
 
     private static readonly string[] Virtual = ["CABLE", "VB-Audio", "Voicemeeter", "Virtual", "Stereo Mix", "What U Hear"];
 
@@ -58,7 +72,8 @@ public static class WinMedia
     /// Dev (--signals): collect every active capture session's process instead of stopping at the first.
     public static System.Collections.Generic.List<uint>? Trace;
 
-    private static bool AnySession(bool render)
+    /// The process of the first matching session, or null.
+    private static uint? AnySession(bool render)
     {
         uint self = (uint)Environment.ProcessId;
         var en = (IMMDeviceEnumerator)new MMDeviceEnumerator();
@@ -86,16 +101,16 @@ public static class WinMedia
                     if (!render)
                     {
                         s.GetState(out int state);
-                        if (state == 1 /* active */) { if (Trace != null) Trace.Add(pid); else return true; }
+                        if (state == 1 /* active */) { if (Trace != null) Trace.Add(pid); else return pid; }
                         continue;
                     }
                     ((IAudioMeterInformation)s).GetPeakValue(out float peak);
-                    if (peak > 0.001f) return true;
+                    if (peak > 0.001f) return pid;
                 }
                 catch (COMException) { }  // a session that closed under us
             }
         }
-        return false;
+        return null;
     }
 
     // Core Audio COM interfaces; unused methods are placeholders that keep the vtable order.

@@ -19,7 +19,7 @@ public static class Program
         if (args.Contains("--selftest"))  // + the sealed firmware opens and is ours
         {
             int r = SelfTest.Run();
-            if (r == 0 && (Flasher.CustomVersion() < 14 || Flasher.Image(Flasher.Edition.Official).Length < 100_000)) { Console.WriteLine("FAIL: sealed firmware"); return 1; }
+            if (r == 0 && (Flasher.CustomVersion() < 15 || Flasher.Image(Flasher.Edition.Official).Length < 100_000)) { Console.WriteLine("FAIL: sealed firmware"); return 1; }
             if (r == 0 && Tx.Collisions() is { Length: > 0 } c) { Console.WriteLine("FAIL: shared translations: " + string.Join("; ", c)); return 1; }
             return r;
         }
