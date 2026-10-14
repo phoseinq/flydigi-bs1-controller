@@ -11,7 +11,7 @@
     <AssemblyName>Bs1Cooler</AssemblyName>
     <ApplicationManifest Condition="'$(TargetFramework)' != 'net10.0'">app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\cooler.ico</ApplicationIcon>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
