@@ -30,6 +30,16 @@ public static class SelfTest
                 q.QuietAtNight = q.QuietOnBattery = q.QuietOnDnd = false;
                 Check(Controller.QuietReasonFor(q, false, false, false, Sig(true, true, true), late) == null, "quiet: switched-off reasons don't count");
             }
+            {
+                var f = new Settings(); var min = TimeSpan.FromMinutes(5);
+                Check(Controller.FanTarget(f, 45, 45, 0, 5, false, 1300, min) == (1300, false), "fan: cool and idle stays put");
+                Check(Controller.FanTarget(f, 45, 45, 0, 5, true, 1300, TimeSpan.Zero) == (Controller.SafeRpm, true), "fan: lost sensors -> safe speed at once");
+                Check(Controller.FanTarget(f, 70, 92, 0, 5, false, 2250, TimeSpan.Zero).due, "fan: critical heat skips the step limits");
+                Check(Controller.FanTarget(f, 55, 55, 0, 5, false, 1500, TimeSpan.FromSeconds(30)) == (1550, false), "fan: a 50 rpm gap waits");
+                Check(Controller.FanTarget(f, 55, 55, 0, 5, false, 1500, TimeSpan.FromSeconds(61)).due, "fan: ... and settles after a minute");
+                Check(Controller.FanTarget(f, 45, 45, 0, 40, false, 1300, TimeSpan.Zero) == (1900, true), "fan: heavy load floor jumps at once");
+                Check(Controller.QuietReasonFor(f, false, true, true, null, new TimeOnly(23, 30), sensorsLost: true) == null, "quiet: never while sensors are lost");
+            }
             var ls = new Settings();
             Check(ls.LoadRpm(5) == 1300 && ls.LoadRpm(40) == 1900 && ls.LoadRpm(55) == 2150 && ls.LoadRpm(100) == 2800, "load floor");
             var cs = new Settings();

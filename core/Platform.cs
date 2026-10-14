@@ -29,6 +29,9 @@ public interface ITemps
     IReadOnlyList<Part> Parts => [];
     /// Busiest of CPU total and GPU core load in %, from the last Read (null = no load sensors).
     double? Load => null;
+    /// Busiest single CPU core in %, from the last Read: one maxed core (a game's main thread) is work that
+    /// CPU total hides on a 20-thread chip.
+    double? BusiestCore => null;
 }
 
 public sealed record Part(string Kind, string Name, double Temp);

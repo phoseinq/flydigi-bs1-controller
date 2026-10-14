@@ -39,6 +39,9 @@ public sealed class Controller
     /// Smoothed CPU/GPU load (%); Heavy above 40 (until it falls under 25): no quiet mode, more air.
     public double? Load { get; private set; }
     public bool Heavy { get; private set; }
+    /// Temperatures were read and then stopped coming: the fan runs at SafeRpm until they return.
+    public bool SensorsLost { get; private set; }
+    private DateTime lastTempAt;
     /// Screen locked: lights off (cooling goes on).
     public bool Locked { get; private set; }
     private readonly MediaGate callGate = new(enter: TimeSpan.Zero);
@@ -177,22 +180,35 @@ public sealed class Controller
     private void ReadTemps()
     {
         if (temps == null) return;
-        (Cpu, Gpu) = temps.Read();
+        try { (Cpu, Gpu) = temps.Read(); }
+        catch (Exception e) { (Cpu, Gpu) = (null, null); Log.Write("sensors failed: " + e.Message); }
         Parts = temps.Parts;
-        if (temps.Load is double l)  // up in ~6 s, down in ~25 s: one busy second isn't work, a pause in work isn't idle
+        // a maxed core counts as heavy work even when CPU total looks idle (a game's main thread). ponytail: Windows
+        // spreads one busy thread over several cores (~45% each), so this mostly fires on Linux; temperature covers the rest
+        double? raw = temps.Load is double tl ? Math.Max(tl, temps.BusiestCore >= 90 ? 40 : 0) : null;
+        if (raw is double l)  // up in ~6 s, down in ~25 s: one busy second isn't work, a pause in work isn't idle
         {
             Load = Load is double p ? p + (l - p) * (l > p ? 0.35 : 0.08) : l;
             bool heavy = Heavy ? Load >= 25 : Load >= 40;
             if (heavy != Heavy) { Heavy = heavy; Log.Write($"load {Load:0}%: {(heavy ? "heavy, no quiet" : "light")}"); }
         }
         rawTemp = Cpu is null && Gpu is null ? null : Math.Max(Cpu ?? 0, Gpu ?? 0);
-        if (rawTemp is not double r) return;
+        if (rawTemp is not double r)
+        {
+            // had temperatures and lost them (sensor or driver failure): don't keep cooling by a stale reading
+            bool stale = lastTempAt != default && DateTime.UtcNow - lastTempAt > TimeSpan.FromSeconds(10);
+            if (stale != SensorsLost) { SensorsLost = stale; Log.Write(stale ? "temperatures lost: safe fan speed" : "temperatures back"); }
+            return;
+        }
+        lastTempAt = DateTime.UtcNow;
+        if (SensorsLost) { SensorsLost = false; Log.Write("temperatures back"); }
         // laptop CPUs spike for a second or two all the time: use the lower of the last two samples (a lone
         // spike never counts), then follow heat up in ~12 s, down in ~25 s (2 s ticks). The old instant
         // snap at 88 C let single package spikes pin the fan near 2900 rpm at 6% load.
         double t = Math.Min(r, prevRaw ?? r);
         prevRaw = r;
-        if (smoothTemp is not double s || t >= 95) smoothTemp = t;  // first sample / sustained and too hot to wait
+        if (r >= Critical) smoothTemp = Math.Max(smoothTemp ?? r, r);  // too hot to wait for smoothing
+        else if (smoothTemp is not double s) smoothTemp = t;  // first sample
         else smoothTemp = s + (t - s) * (t > s ? 0.15 : 0.08);
     }
 
@@ -274,12 +290,7 @@ public sealed class Controller
             }
             else
             {
-                // quiet while something plays: read the curve 8°C lower
-                want = Math.Max(S.CurveRpm((smoothTemp ?? 60) - QuietOffset), S.LoadRpm(Load ?? 0));
-                int delta = want - lastSentRpm;
-                // fewer, bigger steps: an audible change at most every 20 s, unless heat jumps
-                due = lastSentRpm < 0 || delta >= 300
-                      || (Math.Abs(delta) >= 150 && DateTime.Now - lastSpeedChange > TimeSpan.FromSeconds(20));
+                (want, due) = FanTarget(S, smoothTemp, rawTemp, QuietOffset, Load, SensorsLost, lastSentRpm, DateTime.Now - lastSpeedChange);
             }
             want = (int)Math.Round(Math.Clamp(want, 1300, 3000) / 50.0) * 50;
             if (due && want != lastSentRpm)
@@ -487,10 +498,27 @@ public sealed class Controller
         return true;
     }
 
+    public const double Critical = 90;
+    public const int SafeRpm = 2500;
+
+    /// Smart mode's speed and whether to send it now. Temperature curve (read lower in quiet mode) or load
+    /// floor, whichever is higher; a safe speed when the temperatures were lost. Fewer, bigger steps: an
+    /// audible change at most every 20 s, unless heat jumps; leftovers of 50+ rpm settle after a minute.
+    public static (int want, bool due) FanTarget(Settings s, double? smoothTemp, double? rawTemp, double quietOffset, double? load,
+        bool sensorsLost, int lastSent, TimeSpan sinceChange)
+    {
+        int want = sensorsLost ? SafeRpm : Math.Max(s.CurveRpm((smoothTemp ?? 60) - quietOffset), s.LoadRpm(load ?? 0));
+        int delta = want - lastSent;
+        bool due = lastSent < 0 || delta >= 300 || rawTemp >= Critical || sensorsLost
+                   || (Math.Abs(delta) >= 150 && sinceChange > TimeSpan.FromSeconds(20))
+                   || (Math.Abs(delta) >= 50 && sinceChange > TimeSpan.FromSeconds(60));
+        return (want, due);
+    }
+
     /// Why quiet mode is on, or null. Heavy work overrides everything: cooling first. `call` and `media` come
     /// already gated (and already off when their setting is off).
-    public static string? QuietReasonFor(Settings s, bool heavy, bool call, bool media, Signals? sig, TimeOnly now) =>
-        heavy ? null
+    public static string? QuietReasonFor(Settings s, bool heavy, bool call, bool media, Signals? sig, TimeOnly now, bool sensorsLost = false) =>
+        heavy || sensorsLost ? null
         : call ? "Call"
         : media ? "Media"
         : s.QuietOnDnd && sig?.DoNotDisturb == true ? "Do Not Disturb"
@@ -516,7 +544,7 @@ public sealed class Controller
             catch (Exception e) { Log.Write("signals unavailable: " + e.Message); }
         }
         bool call = callGate.Update(S.QuietOnCalls && sig?.MicInUse == true, now);
-        string? reason = QuietReasonFor(S, Heavy, call, MediaPlaying, sig, TimeOnly.FromDateTime(DateTime.Now));
+        string? reason = QuietReasonFor(S, Heavy, call, MediaPlaying, sig, TimeOnly.FromDateTime(DateTime.Now), SensorsLost);
         if (reason != QuietReason) Log.Write(reason != null ? $"quiet: {reason}" : "quiet off");
         QuietReason = reason;
         bool locked = S.LightsOffWhenLocked && sig?.Locked == true;

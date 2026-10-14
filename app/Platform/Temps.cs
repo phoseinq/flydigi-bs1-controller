@@ -13,6 +13,7 @@ public sealed class Temps : ITemps, IDisposable
 
     public IReadOnlyList<Part> Parts => parts;
     public double? Load { get; private set; }
+    public double? BusiestCore { get; private set; }
 
     public Temps() => pc.Open();
 
@@ -20,7 +21,7 @@ public sealed class Temps : ITemps, IDisposable
     {
         double? cpu = null, gpu = null;
         var found = new List<Part>();
-        double? load = null;
+        double? load = null, busiest = null;
         foreach (var hw in pc.Hardware)
         {
             try { hw.Update(); foreach (var sub in hw.SubHardware) sub.Update(); } catch { continue; }  // one broken sensor must not kill the rest
@@ -30,6 +31,9 @@ public sealed class Temps : ITemps, IDisposable
             if (hw.HardwareType is HardwareType.Cpu or HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel
                 && hw.Sensors.FirstOrDefault(s => s.SensorType == SensorType.Load && s.Name is "CPU Total" or "GPU Core" or "D3D 3D")?.Value is float l)
                 load = Math.Max(load ?? 0, l);
+            if (hw.HardwareType == HardwareType.Cpu)
+                foreach (var s in hw.Sensors.Where(s => s.SensorType == SensorType.Load && s.Name.StartsWith("CPU Core #") && s.Value is float))
+                    busiest = Math.Max(busiest ?? 0, s.Value!.Value);
             if (temps.Count == 0) continue;
             if (hw.HardwareType == HardwareType.Storage)
             {
@@ -64,6 +68,7 @@ public sealed class Temps : ITemps, IDisposable
         if (!found.Any(p => p.Kind == "board") && BoardZone() is double z) found.Add(new("board", boardName ??= BoardName(), z));
         parts = found;
         Load = load;
+        BusiestCore = busiest;
         return (cpu, gpu);
     }
 

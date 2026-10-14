@@ -46,10 +46,38 @@ jobs:
           v=${GITHUB_REF_NAME#v}; [ "$GITHUB_REF_TYPE" = tag ] || v=2.0.0
           dotnet publish app -f net10.0 -r ${{ matrix.rid }} --self-contained true -c Release -p:Version=$v -o out/BS1Cooler
           tar -C out -czf BS1Cooler-$v-${{ matrix.rid }}.tar.gz BS1Cooler
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+      - name: deb and rpm packages
+        if: matrix.rid == 'linux-x64'
+        run: |
+          sudo apt-get install -y -qq ruby rpm >/dev/null && sudo gem install --no-document fpm >/dev/null
+          # /opt/bs1cooler (the app), a menu entry, the USB rule, and bs1cooler on PATH
+          mkdir -p pkg/opt pkg/usr/share/applications pkg/usr/lib/udev/rules.d pkg/usr/bin
+          cp -r out/BS1Cooler pkg/opt/bs1cooler
+          mv pkg/opt/bs1cooler/99-bs1cooler.rules pkg/usr/lib/udev/rules.d/
+          ln -s /opt/bs1cooler/Bs1Cooler pkg/usr/bin/bs1cooler
+          printf '[Desktop Entry]
+Type=Application
+Name=BS1 Cooler
+Comment=Fan and lights for the Flydigi BS1 laptop cooler
+Exec=/opt/bs1cooler/Bs1Cooler
+Icon=/opt/bs1cooler/cooler.ico
+Categories=Utility;System;
+' > pkg/usr/share/applications/bs1cooler.desktop
+          printf 'udevadm control --reload >/dev/null 2>&1 || true
+udevadm trigger >/dev/null 2>&1 || true
+' > reload-udev.sh
+          for t in deb rpm; do
+            fpm -s dir -t $t -C pkg -n bs1cooler -v "$VERSION" -a x86_64 --license MIT --url "https://github.com/$GITHUB_REPOSITORY"               --description "Fan and lights for the Flydigi BS1 laptop cooler" --maintainer phoseinq               --after-install reload-udev.sh --after-remove reload-udev.sh .
+          done
+          ls -la *.deb *.rpm
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.rid }}
-          path: '*.tar.gz'
+          path: |
+            *.tar.gz
+            *.deb
+            *.rpm
 
   publish:
     if: github.ref_type == 'tag'

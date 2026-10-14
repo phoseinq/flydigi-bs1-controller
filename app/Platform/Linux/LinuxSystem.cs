@@ -13,7 +13,8 @@ public sealed class LinuxTemps : ITemps
     private List<Part> parts = [];
     public IReadOnlyList<Part> Parts => parts;
     public double? Load { get; private set; }
-    private (long busy, long all)? lastCpu;
+    public double? BusiestCore { get; private set; }
+    private readonly Dictionary<string, (long busy, long all)> lastCpu = [];
 
     public (double? cpu, double? gpu) Read()
     {
@@ -55,15 +56,22 @@ public sealed class LinuxTemps : ITemps
         return (cpu, gpu);
     }
 
-    /// Busy share of all CPU time since the last read, from /proc/stat's first line.
+    /// Busy share of CPU time since the last read, from /proc/stat: the "cpu" line for all, "cpuN" per core.
     private double? CpuLoad()
     {
-        var f = Text("/proc/stat").Split('\n')[0].Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1).Select(long.Parse).ToArray();
-        if (f.Length < 4) return null;
-        long idle = f[3] + (f.Length > 4 ? f[4] : 0), all = f.Sum();
-        var prev = lastCpu;
-        lastCpu = (all - idle, all);
-        return prev is var (b0, a0) && all > a0 ? 100.0 * (all - idle - b0) / (all - a0) : null;
+        double? total = null, busiest = null;
+        foreach (var line in Text("/proc/stat").Split('\n').Where(l => l.StartsWith("cpu")))
+        {
+            var w = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var f = w.Skip(1).Select(long.Parse).ToArray();
+            if (f.Length < 4) continue;
+            long idle = f[3] + (f.Length > 4 ? f[4] : 0), all = f.Sum();
+            double? share = lastCpu.TryGetValue(w[0], out var p) && all > p.all ? 100.0 * (all - idle - p.busy) / (all - p.all) : null;
+            lastCpu[w[0]] = (all - idle, all);
+            if (w[0] == "cpu") total = share; else busiest = Max(busiest, share);
+        }
+        BusiestCore = busiest;
+        return total;
     }
 
     public string Dump() => string.Join("; ", Directory.Exists("/sys/class/hwmon") ? Directory.GetDirectories("/sys/class/hwmon")
