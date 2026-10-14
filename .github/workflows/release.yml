@@ -56,19 +56,14 @@ jobs:
           cp -r out/BS1Cooler pkg/opt/bs1cooler
           mv pkg/opt/bs1cooler/99-bs1cooler.rules pkg/usr/lib/udev/rules.d/
           ln -s /opt/bs1cooler/Bs1Cooler pkg/usr/bin/bs1cooler
-          printf '[Desktop Entry]
-Type=Application
-Name=BS1 Cooler
-Comment=Fan and lights for the Flydigi BS1 laptop cooler
-Exec=/opt/bs1cooler/Bs1Cooler
-Icon=/opt/bs1cooler/cooler.ico
-Categories=Utility;System;
-' > pkg/usr/share/applications/bs1cooler.desktop
-          printf 'udevadm control --reload >/dev/null 2>&1 || true
-udevadm trigger >/dev/null 2>&1 || true
-' > reload-udev.sh
+          printf '%s\n' '[Desktop Entry]' 'Type=Application' 'Name=BS1 Cooler' \
+            'Comment=Fan and lights for the Flydigi BS1 laptop cooler' 'Exec=/opt/bs1cooler/Bs1Cooler' \
+            'Icon=/opt/bs1cooler/cooler.ico' 'Categories=Utility;System;' > pkg/usr/share/applications/bs1cooler.desktop
+          printf '%s\n' 'udevadm control --reload >/dev/null 2>&1 || true' 'udevadm trigger >/dev/null 2>&1 || true' > reload-udev.sh
           for t in deb rpm; do
-            fpm -s dir -t $t -C pkg -n bs1cooler -v "$VERSION" -a x86_64 --license MIT --url "https://github.com/$GITHUB_REPOSITORY"               --description "Fan and lights for the Flydigi BS1 laptop cooler" --maintainer phoseinq               --after-install reload-udev.sh --after-remove reload-udev.sh .
+            fpm -s dir -t $t -C pkg -n bs1cooler -v "$VERSION" -a x86_64 --license MIT --url "https://github.com/$GITHUB_REPOSITORY" \
+              --description "Fan and lights for the Flydigi BS1 laptop cooler" --maintainer phoseinq \
+              --after-install reload-udev.sh --after-remove reload-udev.sh .
           done
           ls -la *.deb *.rpm
       - uses: actions/upload-artifact@v4
