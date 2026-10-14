@@ -1,7 +1,9 @@
 ; BS1 Cooler installer (English + Persian). Build: installer\build.ps1
 #define AppName "BS1 Cooler"
 #define AppExe "Bs1Cooler.exe"
-#define AppVersion GetVersionNumbersString(AddBackslash(SourcePath) + "app\" + AppExe)
+#define FullVersion GetVersionNumbersString(AddBackslash(SourcePath) + "app\" + AppExe)
+; 2.0.0.0 -> 2.0.0, as in the release tag
+#define AppVersion Copy(FullVersion, 1, RPos(".", FullVersion) - 1)
 #define TaskName "BS1 Cooler"
 
 [Setup]
