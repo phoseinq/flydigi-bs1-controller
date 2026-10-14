@@ -1,0 +1,511 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:ic="using:FluentIcons.Avalonia"
+        x:Class="Bs1Cooler.App.MainWindow"
+        Title="BS1 Cooler" Width="400" Height="620" CanResize="False"
+        TransparencyLevelHint="Mica, AcrylicBlur" Background="Transparent"
+        WindowDecorations="BorderOnly" CanMaximize="False" CanMinimize="False" WindowStartupLocation="Manual">
+  <Panel>
+    <!-- solid fallback when Mica isn't available (Windows 10, Linux) -->
+    <Border Name="Fallback" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" IsVisible="False" />
+
+    <!-- ================= Home ================= -->
+    <DockPanel Name="Home" Margin="16">
+      <!-- header: name, status, power -->
+      <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,14">
+        <Panel>
+          <Border Width="44" Height="44" CornerRadius="22" Background="{DynamicResource AccentFillColorDefaultBrush}">
+            <ic:SymbolIcon Symbol="WeatherSunny" Name="HeaderIcon" FontSize="24" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+          </Border>
+          <!-- quiet mode badge, like the tray icon's -->
+          <Border Name="QuietBadge" Width="20" Height="20" CornerRadius="10" Background="#2DB467" IsVisible="False"
+                  HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-4,-4"
+                  BorderBrush="{DynamicResource SolidBackgroundFillColorBaseBrush}" BorderThickness="2">
+            <ic:SymbolIcon Symbol="LeafTwo" IconVariant="Filled" FontSize="12" Foreground="White" />
+          </Border>
+        </Panel>
+        <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+          <TextBlock Text="BS1 Cooler" FontSize="18" FontWeight="SemiBold" />
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <ic:SymbolIcon Name="LinkIcon" Symbol="UsbPlug" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <TextBlock Name="StatusText" Classes="caption" Text="Searching…" />
+            <!-- heavy CPU/GPU work: more air before the heat shows, quiet mode held off -->
+            <Border Name="HeavyPill" Background="#33F0922F" CornerRadius="8" Padding="6,1" IsVisible="False">
+              <StackPanel Orientation="Horizontal" Spacing="3">
+                <ic:SymbolIcon Symbol="Flash" IconVariant="Filled" FontSize="11" Foreground="#F0922F" />
+                <TextBlock Name="HeavyText" Text="Heavy load" FontSize="11" Foreground="#F0922F" />
+              </StackPanel>
+            </Border>
+            <Border Name="QuietPill" Background="#332DB467" CornerRadius="8" Padding="6,1" IsVisible="False">
+              <StackPanel Orientation="Horizontal" Spacing="3">
+                <ic:SymbolIcon Symbol="LeafTwo" IconVariant="Filled" FontSize="11" Foreground="#2DB467" />
+                <TextBlock Name="QuietText" Text="Quiet" FontSize="11" Foreground="#2DB467" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </StackPanel>
+        <ToggleSwitch Grid.Column="2" Name="PowerSwitch" OnContent="" OffContent="" VerticalAlignment="Center" />
+      </Grid>
+
+      <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,*" ColumnSpacing="8" Margin="0,12,0,0">
+        <Button Name="TempsBtn" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <ic:SymbolIcon Symbol="Temperature" FontSize="18" Foreground="#F0922F" />
+            <TextBlock Text="Temperatures" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="1" Name="SettingsBtn" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="12,8">
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <ic:SymbolIcon Symbol="Settings" FontSize="18" Foreground="#3D8BF2" />
+            <TextBlock Text="Settings" />
+          </StackPanel>
+        </Button>
+      </Grid>
+
+      <ScrollViewer>
+        <StackPanel Spacing="10">
+          <ui:FAInfoBar Name="UpdateBar" IsOpen="False" IsClosable="True" Severity="Informational"
+                        Title="Firmware update" Message="Your cooler's firmware is old: it can't start by itself after a power cut.">
+            <ui:FAInfoBar.ActionButton><Button Name="UpdateBarBtn" Content="Update" /></ui:FAInfoBar.ActionButton>
+          </ui:FAInfoBar>
+          <!-- live numbers; tap for every sensor -->
+          <Grid Name="Stats" ColumnDefinitions="*,*,*" ColumnSpacing="8" Cursor="Hand" Background="Transparent">
+            <Border Classes="stat">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6"><ic:SymbolIcon Symbol="TopSpeed" Foreground="#3D8BF2" /><TextBlock Classes="caption" Text="Fan" /></StackPanel>
+                <TextBlock Name="RpmText" Classes="big" Text="–" />
+                <TextBlock Classes="caption" Text="rpm" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Classes="stat">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6"><ic:SymbolIcon Symbol="DeveloperBoard" Foreground="#F0922F" /><TextBlock Classes="caption" Text="CPU" /></StackPanel>
+                <TextBlock Name="CpuText" Classes="big" Text="–" />
+                <TextBlock Classes="caption" Text="&#x200E;°C" />
+              </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Classes="stat">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="6"><ic:SymbolIcon Symbol="Desktop" Foreground="#2DB467" /><TextBlock Classes="caption" Text="GPU" /></StackPanel>
+                <TextBlock Name="GpuText" Classes="big" Text="–" />
+                <TextBlock Classes="caption" Text="&#x200E;°C" />
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <!-- fan -->
+          <Border Classes="card">
+            <StackPanel Spacing="10">
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <ic:SymbolIcon Symbol="TopSpeed" FontSize="18" />
+                <TextBlock Classes="title" Text="Fan" />
+              </StackPanel>
+              <Border Classes="seg">
+                <Grid ColumnDefinitions="*,*">
+                  <ToggleButton Name="SmartRadio"><StackPanel Orientation="Horizontal" Spacing="6"><ic:SymbolIcon Symbol="Sparkle" FontSize="15" /><TextBlock Text="Smart" /></StackPanel></ToggleButton>
+                  <ToggleButton Grid.Column="1" Name="ManualRadio"><StackPanel Orientation="Horizontal" Spacing="6"><ic:SymbolIcon Symbol="HandRight" FontSize="15" /><TextBlock Text="Manual" /></StackPanel></ToggleButton>
+                </Grid>
+              </Border>
+              <TextBlock Name="SmartHint" Classes="caption" TextWrapping="Wrap" Text="Follows CPU and GPU temperature. Quieter while media plays." />
+              <StackPanel Name="ManualRow" Spacing="4">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Classes="caption" Text="Speed" />
+                  <TextBlock Grid.Column="1" Name="ManualText" Classes="caption" />
+                </Grid>
+                <Slider Name="ManualSlider" Minimum="1300" Maximum="3000" TickFrequency="100" IsSnapToTickEnabled="True" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- lights -->
+          <Border Classes="card">
+            <StackPanel Spacing="10">
+              <Grid ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="LightbulbFilament" FontSize="18" />
+                <TextBlock Grid.Column="1" Classes="title" Text="Lights" Margin="10,0" VerticalAlignment="Center" />
+                <ToggleSwitch Grid.Column="2" Name="LightSwitch" OnContent="" OffContent="" />
+              </Grid>
+              <StackPanel Name="LightPanel" Spacing="10">
+                <ComboBox Name="EffectBox" HorizontalAlignment="Stretch">
+                  <ComboBoxItem Content="Color by fan speed" />
+                  <ComboBoxItem Content="Steady color" />
+                  <ComboBoxItem Content="Breathe" />
+                  <ComboBoxItem Content="Wave" />
+                  <ComboBoxItem Content="Twinkle" />
+                  <ComboBoxItem Content="Fade" />
+                </ComboBox>
+                <!-- color: for the effects that use one (not the temperature ones) -->
+                <StackPanel Name="ColorRow" Spacing="6">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <ic:SymbolIcon Symbol="Color" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Classes="caption" Text="Color" />
+                  </StackPanel>
+                  <WrapPanel Name="Swatches" ItemSpacing="6" LineSpacing="6">
+                    <ColorPicker Name="CustomColor" IsAlphaEnabled="False" IsAlphaVisible="False" Width="44" Height="28"
+                                 ToolTip.Tip="Custom color" />
+                  </WrapPanel>
+                </StackPanel>
+                <StackPanel Spacing="4">
+                  <Grid ColumnDefinitions="Auto,*,Auto">
+                    <ic:SymbolIcon Symbol="BrightnessHigh" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Grid.Column="1" Classes="caption" Text="Brightness" Margin="6,0" />
+                    <TextBlock Grid.Column="2" Name="BrightText" Classes="caption" />
+                  </Grid>
+                  <Slider Name="BrightSlider" Minimum="5" Maximum="100" />
+                </StackPanel>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </DockPanel>
+
+    <!-- ================= Settings ================= -->
+    <DockPanel Name="SettingsPage" Margin="16,16,16,16" IsVisible="False">
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,14">
+        <Button Name="BackBtn" Classes="ghost">
+          <ic:SymbolIcon Classes="back" Symbol="ArrowLeft" FontSize="16" />
+        </Button>
+        <TextBlock Text="Settings" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
+      </StackPanel>
+      <ScrollViewer>
+        <StackPanel Spacing="18">
+
+          <!-- 1. startup & behaviour -->
+          <Border Classes="section">
+            <Border.Resources>
+              <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#3D8BF2" />
+              <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#5A9DF4" />
+              <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#3D8BF2" />
+              <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#3D8BF2" />
+            </Border.Resources>
+            <StackPanel>
+              <StackPanel Classes="sechead">
+                <Border Classes="tile blue"><ic:SymbolIcon Symbol="Power" /></Border>
+                <TextBlock Text="Startup &amp; behavior" />
+              </StackPanel>
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="Rocket" />
+                <StackPanel Grid.Column="1"><TextBlock Text="Start with Windows" /><TextBlock Classes="desc" Text="Runs in the tray when you sign in" /></StackPanel>
+                <ToggleSwitch Grid.Column="2" Name="StartWithWindows" OnContent="" OffContent="" />
+              </Grid>
+              <Separator />
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="Play" />
+                <StackPanel Grid.Column="1"><TextBlock Text="When the app opens" /><TextBlock Classes="desc" Text="What the cooler does" /></StackPanel>
+                <ComboBox Grid.Column="2" Name="OnStartup" MinWidth="118">
+                  <ComboBoxItem Content="Turn on" />
+                  <ComboBoxItem Content="Turn off" />
+                  <ComboBoxItem Content="Keep as is" />
+                </ComboBox>
+              </Grid>
+              <Separator />
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="WeatherMoon" />
+                <StackPanel Grid.Column="1"><TextBlock Text="Off at shutdown and sleep" /><TextBlock Classes="desc" Text="Fan and lights go off with the PC" /></StackPanel>
+                <ToggleSwitch Grid.Column="2" Name="OffOnShutdown" OnContent="" OffContent="" />
+              </Grid>
+              <Separator />
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="LockClosed" />
+                <StackPanel Grid.Column="1"><TextBlock Text="Lights off when locked" /><TextBlock Classes="desc" Text="Cooling goes on" /></StackPanel>
+                <ToggleSwitch Grid.Column="2" Name="LightsOffWhenLocked" OnContent="" OffContent="" />
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <!-- quiet mode: what turns it on -->
+          <Border Classes="section">
+            <Border.Resources>
+              <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#2DB467" />
+              <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#45C17A" />
+              <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#2DB467" />
+              <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#2DB467" />
+            </Border.Resources>
+            <StackPanel>
+              <StackPanel Classes="sechead">
+                <Border Classes="tile green"><ic:SymbolIcon Symbol="LeafTwo" IconVariant="Filled" /></Border>
+                <TextBlock Text="Quiet mode" />
+              </StackPanel>
+              <TextBlock Classes="desc" Margin="0,0,0,4" Text="Slower fan and dimmer lights. Never under heavy load or above 70 °C: cooling always wins." />
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="MoviesAndTv" />
+                <StackPanel Grid.Column="1"><TextBlock Text="Media and sound" /><TextBlock Classes="desc" Text="Any app playing sound for 6 s; ends after 30 s of silence" /></StackPanel>
+                <ToggleSwitch Grid.Column="2" Name="QuietWhenMedia" OnContent="" OffContent="" />
+              </Grid>
+              <Separator />
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="Mic" />
+                <StackPanel Grid.Column="1"><TextBlock Text="Calls" /><TextBlock Classes="desc" Text="While an app uses the microphone" /></StackPanel>
+                <ToggleSwitch Grid.Column="2" Name="QuietOnCalls" OnContent="" OffContent="" />
+              </Grid>
+              <Separator />
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="AlertOff" />
+                <StackPanel Grid.Column="1"><TextBlock Text="Do Not Disturb" /><TextBlock Classes="desc" Text="Also while presenting" /></StackPanel>
+                <ToggleSwitch Grid.Column="2" Name="QuietOnDnd" OnContent="" OffContent="" />
+              </Grid>
+              <Separator />
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="Battery10" />
+                <StackPanel Grid.Column="1"><TextBlock Text="On battery" /><TextBlock Classes="desc" Text="While the laptop is unplugged" /></StackPanel>
+                <ToggleSwitch Grid.Column="2" Name="QuietOnBattery" OnContent="" OffContent="" />
+              </Grid>
+              <Separator />
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="WeatherMoon" />
+                <StackPanel Grid.Column="1"><TextBlock Text="Night" /><TextBlock Classes="desc" Text="Every night between these hours" /></StackPanel>
+                <ToggleSwitch Grid.Column="2" Name="QuietAtNight" OnContent="" OffContent="" />
+              </Grid>
+              <StackPanel Name="NightHours" Orientation="Horizontal" Spacing="8" Margin="30,0,0,8">
+                <TextBlock Classes="desc" Text="From" VerticalAlignment="Center" />
+                <TextBox Name="NightFrom" Width="70" HorizontalContentAlignment="Center" FlowDirection="LeftToRight" />
+                <TextBlock Classes="desc" Text="to" VerticalAlignment="Center" />
+                <TextBox Name="NightTo" Width="70" HorizontalContentAlignment="Center" FlowDirection="LeftToRight" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- 2. cooler: connection, firmware -->
+          <Border Classes="section">
+            <Border.Resources>
+              <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#14B8A6" />
+              <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#2DD4BF" />
+              <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#14B8A6" />
+              <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#14B8A6" />
+            </Border.Resources>
+            <StackPanel>
+              <StackPanel Classes="sechead">
+                <Border Classes="tile teal"><ic:SymbolIcon Symbol="DeveloperBoard" /></Border>
+                <TextBlock Text="Cooler" />
+              </StackPanel>
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="PlugConnected" />
+                <StackPanel Grid.Column="1"><TextBlock Text="Connect automatically" /><TextBlock Classes="desc" Text="USB if the cable carries data, else Bluetooth" /></StackPanel>
+                <ToggleSwitch Grid.Column="2" Name="AutoConnect" OnContent="" OffContent="" />
+              </Grid>
+              <Separator />
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="ArrowSync" />
+                <StackPanel Grid.Column="1">
+                  <TextBlock Text="Firmware" />
+                  <TextBlock Name="FirmwareDesc" Classes="desc" Text="–" />
+                  <TextBlock Name="FirmwareState" FontSize="12" FontWeight="SemiBold" />
+                </StackPanel>
+                <Button Grid.Column="2" Name="UpdateBtn" Content="Update" />
+              </Grid>
+              <!-- beta: debug tools -->
+              <StackPanel Name="DebugTools" Spacing="6" Margin="0,6,0,0" IsVisible="False">
+                <TextBlock Classes="desc" Text="Debug tools" FontWeight="SemiBold" />
+                <WrapPanel ItemSpacing="6" LineSpacing="6">
+                  <Button Name="OpenLogBtn" Content="Open log" />
+                  <Button Name="DumpSensorsBtn" Content="Log all sensors" />
+                  <Button Name="CopyReportBtn" Content="Copy report" />
+                </WrapPanel>
+              </StackPanel>
+              <Expander Header="Advanced" Margin="0,6,0,0" HorizontalAlignment="Stretch">
+                <Grid ColumnDefinitions="*,Auto">
+                  <StackPanel><TextBlock Text="Edition" /><TextBlock Classes="desc" TextWrapping="Wrap" Text="Official, ours with more features, or beta for testing" /></StackPanel>
+                  <ComboBox Grid.Column="1" Name="EditionBox" MinWidth="100" SelectedIndex="1" VerticalAlignment="Center">
+                    <ComboBoxItem Content="Official" />
+                    <ComboBoxItem Content="Custom" />
+                    <ComboBoxItem Content="Beta" />
+                  </ComboBox>
+                </Grid>
+              </Expander>
+            </StackPanel>
+          </Border>
+
+          <!-- 3. language -->
+          <Border Classes="section">
+            <Border.Resources>
+              <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#9B74F7" />
+              <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#AC8AF8" />
+              <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#9B74F7" />
+              <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#9B74F7" />
+            </Border.Resources>
+            <StackPanel>
+              <StackPanel Classes="sechead">
+                <Border Classes="tile purple"><ic:SymbolIcon Symbol="LocalLanguage" /></Border>
+                <TextBlock Text="Language" />
+              </StackPanel>
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="Translate" />
+                <TextBlock Grid.Column="1" Text="App language" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="2" Name="LanguageBox" MinWidth="118" SelectedIndex="0">
+                  <ComboBoxItem Content="English" />
+                  <ComboBoxItem Content="فارسی" />
+                  <ComboBoxItem Content="简体中文" />
+                </ComboBox>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <!-- 4. help -->
+          <Border Classes="section">
+            <Border.Resources>
+              <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#F0922F" />
+              <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#F2A24E" />
+              <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#F0922F" />
+              <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#F0922F" />
+            </Border.Resources>
+            <StackPanel>
+              <StackPanel Classes="sechead">
+                <Border Classes="tile orange"><ic:SymbolIcon Symbol="ChatHelp" /></Border>
+                <TextBlock Text="Help &amp; about" />
+              </StackPanel>
+              <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
+                <ic:SymbolIcon Symbol="Bug" />
+                <StackPanel Grid.Column="1"><TextBlock Text="Report a problem" /><TextBlock Classes="desc" Text="Copies a report and opens the log folder" /></StackPanel>
+                <Button Grid.Column="2" Name="ReportBtn" Content="Report" />
+              </Grid>
+              <Separator />
+              <Grid Classes="row" ColumnDefinitions="Auto,*">
+                <ic:SymbolIcon Symbol="Info" />
+                <TextBlock Grid.Column="1" Name="AboutText" Classes="desc" VerticalAlignment="Center" />
+              </Grid>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </DockPanel>
+    <!-- ================= Temperatures: a ring per part, grouped by kind ================= -->
+    <DockPanel Name="TempsPage" Margin="16" IsVisible="False">
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,0,0,14">
+        <Button Name="TempsBack" Classes="ghost">
+          <ic:SymbolIcon Classes="back" Symbol="ArrowLeft" FontSize="16" />
+        </Button>
+        <TextBlock Text="Temperatures" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
+      </StackPanel>
+      <ScrollViewer>
+        <StackPanel Name="TempsList" Spacing="18" />
+      </ScrollViewer>
+    </DockPanel>
+
+    <!-- ================= First run ================= -->
+    <DockPanel Name="SetupPage" Margin="20" IsVisible="False">
+      <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <Button Name="SetupSkip" Content="Skip" />
+        <Button Name="SetupNext" Classes="accent" Content="Next" IsEnabled="False" />
+      </StackPanel>
+      <StackPanel Spacing="14">
+        <Border Width="64" Height="64" CornerRadius="32" HorizontalAlignment="Left" Background="{DynamicResource AccentFillColorDefaultBrush}">
+          <ic:SymbolIcon Symbol="WeatherSunny" FontSize="34" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+        </Border>
+        <TextBlock Text="Welcome" FontSize="26" FontWeight="SemiBold" />
+        <TextBlock TextWrapping="Wrap" Classes="caption" FontSize="14"
+                   Text="BS1 Cooler runs your Flydigi BS1: fan speed from your CPU and GPU temperature, lights, and firmware updates." />
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock Text="Language" VerticalAlignment="Center" />
+          <ComboBox Grid.Column="1" Name="SetupLanguage" MinWidth="120" SelectedIndex="0">
+            <ComboBoxItem Content="English" />
+            <ComboBoxItem Content="فارسی" />
+            <ComboBoxItem Content="中文" />
+          </ComboBox>
+        </Grid>
+        <Border Classes="card">
+          <StackPanel Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <ui:FAProgressRing Name="SetupRing" Width="20" Height="20" IsIndeterminate="True" />
+              <ic:SymbolIcon Name="SetupOk" Symbol="ShieldCheckmark" FontSize="20" Foreground="{DynamicResource SystemFillColorSuccessBrush}" IsVisible="False" />
+              <TextBlock Name="SetupStatus" Classes="title" Text="Looking for your cooler…" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Name="SetupHint" Classes="caption" TextWrapping="Wrap"
+                       Text="Turn it on and plug it into this PC with its USB-C cable, or keep it near the PC for Bluetooth." />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </DockPanel>
+
+    <!-- ================= Firmware update ================= -->
+    <DockPanel Name="UpdatePage" Margin="20" IsVisible="False">
+      <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+        <Button Name="UpdateBack" Padding="8" Background="Transparent" BorderThickness="0">
+          <ic:SymbolIcon Classes="back" Symbol="ArrowLeft" FontSize="16" />
+        </Button>
+        <TextBlock Text="Firmware" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+      </StackPanel>
+      <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <Button Name="UpdateCancel" Content="Cancel" />
+        <Button Name="UpdateGo" Classes="accent" Content="Next" />
+      </StackPanel>
+      <Panel>
+        <!-- 1. choose -->
+        <StackPanel Name="StepChoose" Spacing="10">
+          <TextBlock Name="CurrentFw" Classes="caption" TextWrapping="Wrap" />
+          <RadioButton Name="PickCustom" GroupName="ed" IsChecked="True">
+            <StackPanel>
+              <TextBlock Text="BS1 Cooler firmware (recommended)" FontWeight="SemiBold" />
+              <TextBlock Classes="caption" TextWrapping="Wrap" Text="Starts after a power cut, smooth colors, boot and power-down animations, a real off." />
+            </StackPanel>
+          </RadioButton>
+          <RadioButton Name="PickOfficial" GroupName="ed">
+            <StackPanel>
+              <TextBlock Text="Official Flydigi firmware" FontWeight="SemiBold" />
+              <TextBlock Classes="caption" TextWrapping="Wrap" Text="The latest from Flydigi, unchanged. Also the way back from ours." />
+            </StackPanel>
+          </RadioButton>
+          <CheckBox Name="Consent" Margin="0,6,0,0">
+            <TextBlock TextWrapping="Wrap" Classes="caption"
+                       Text="I understand the cooler restarts during the update. If anything goes wrong, the same steps put the official firmware back." />
+          </CheckBox>
+        </StackPanel>
+
+        <!-- 2. bootloader instructions: an animated cooler + steps that tick themselves off -->
+        <StackPanel Name="StepPlug" Spacing="12" IsVisible="False">
+          <TextBlock Classes="title" Text="Put the cooler in update mode" />
+          <Border Classes="card" Padding="0" Height="132" ClipToBounds="True">
+            <Grid Name="Art" Width="300" Height="132" Classes="unplug">
+              <!-- cooler seen from the side: body, two fan grilles, the power button on top, USB-C port at the right -->
+              <Border Width="200" Height="56" CornerRadius="12" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,50,0,0"
+                      Background="{DynamicResource ControlFillColorSecondaryBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1" />
+              <Ellipse Width="34" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="52,61,0,0" Stroke="{DynamicResource TextFillColorTertiaryBrush}" StrokeThickness="1.5" StrokeDashArray="2,2" />
+              <Ellipse Width="34" Height="34" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="122,61,0,0" Stroke="{DynamicResource TextFillColorTertiaryBrush}" StrokeThickness="1.5" StrokeDashArray="2,2" />
+              <Ellipse Name="BtnRing" Classes="ring" Width="30" Height="30" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="175,23,0,0"
+                       Stroke="{DynamicResource AccentFillColorDefaultBrush}" StrokeThickness="2" Opacity="0" />
+              <Border Width="18" Height="12" CornerRadius="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="181,39,0,0"
+                      Background="{DynamicResource AccentFillColorDefaultBrush}" />
+              <TextBlock Text="power" Classes="caption" FontSize="10" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="174,8,0,0" />
+              <Border Width="6" Height="14" CornerRadius="2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="216,71,0,0" Background="{DynamicResource TextFillColorTertiaryBrush}" />
+              <!-- cable: plug + lead, slides in and out -->
+              <StackPanel Name="Cable" Classes="cable" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="224,70,0,0">
+                <Border Width="22" Height="16" CornerRadius="4" Background="{DynamicResource TextFillColorSecondaryBrush}" />
+                <Border Width="120" Height="5" Margin="0,5,0,0" CornerRadius="2" Background="{DynamicResource TextFillColorSecondaryBrush}" />
+              </StackPanel>
+            </Grid>
+          </Border>
+          <Grid ColumnDefinitions="34,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+            <Border Name="Dot1" Classes="dot"><TextBlock Text="1" /></Border>
+            <StackPanel Grid.Column="1"><TextBlock Name="Txt1" Text="Unplug the cooler's USB-C cable" /><TextBlock Classes="caption" Text="The cable that goes to this PC." /></StackPanel>
+            <Border Grid.Row="1" Name="Dot2" Classes="dot"><TextBlock Text="2" /></Border>
+            <StackPanel Grid.Row="1" Grid.Column="1"><TextBlock Name="Txt2" Text="Press and hold the power button" /><TextBlock Classes="caption" Text="Keep holding it." /></StackPanel>
+            <Border Grid.Row="2" Name="Dot3" Classes="dot"><TextBlock Text="3" /></Border>
+            <StackPanel Grid.Row="2" Grid.Column="1"><TextBlock Name="Txt3" Text="Plug the cable back in, then let go" /><TextBlock Classes="caption" Text="The lights stay off: that's update mode." /></StackPanel>
+          </Grid>
+          <ui:FAInfoBar Name="HelpBar" IsOpen="False" IsClosable="True" Severity="Informational" Title="Not working?"
+                        Message="Use a cable that carries data (not charge-only) and plug it straight into the PC, not a hub. Hold the button before the cable goes in, and keep holding for a second." />
+          <ui:FAInfoBar Name="DriverBar" IsOpen="False" IsClosable="False" Severity="Warning"
+                        Title="USB driver needed" Message="Windows found the cooler but has no driver for its update mode.">
+            <ui:FAInfoBar.ActionButton><Button Name="DriverBtn" Content="Install driver" /></ui:FAInfoBar.ActionButton>
+          </ui:FAInfoBar>
+        </StackPanel>
+
+        <!-- 3. flashing -->
+        <StackPanel Name="StepFlash" Spacing="12" IsVisible="False">
+          <TextBlock Classes="title" Text="Updating" />
+          <TextBlock Name="FlashStep" Classes="caption" Text="…" />
+          <ProgressBar Name="FlashBar" Minimum="0" Maximum="1" Height="6" />
+          <TextBlock Classes="caption" TextWrapping="Wrap" Text="Don't unplug the cooler. This takes about 10 seconds." />
+        </StackPanel>
+
+        <!-- 4. result -->
+        <StackPanel Name="StepDone" Spacing="12" IsVisible="False">
+          <ic:SymbolIcon Name="DoneIcon" Symbol="ShieldCheckmark" FontSize="48" HorizontalAlignment="Left" Foreground="{DynamicResource SystemFillColorSuccessBrush}" />
+          <TextBlock Name="DoneTitle" FontSize="20" FontWeight="SemiBold" Text="Done" />
+          <TextBlock Name="DoneText" Classes="caption" TextWrapping="Wrap" />
+        </StackPanel>
+      </Panel>
+    </DockPanel>
+  </Panel>
+</Window>

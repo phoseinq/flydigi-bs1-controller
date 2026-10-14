@@ -4,7 +4,7 @@ param([string]$Version)
 $ErrorActionPreference = 'Stop'
 Remove-Item "$PSScriptRoot\app" -Recurse -Force -ErrorAction SilentlyContinue
 [string[]]$ver = if ($Version) { "-p:Version=$Version" } else { @() }
-dotnet publish "$PSScriptRoot\..\cooler" -c Release -r win-x64 --self-contained true -o "$PSScriptRoot\app" @ver
+dotnet publish "$PSScriptRoot\..\app" -c Release -r win-x64 --self-contained true -o "$PSScriptRoot\app" @ver
 if ($LASTEXITCODE) { throw 'publish failed' }
 $iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") |
     Where-Object { Test-Path $_ } | Select-Object -First 1

@@ -1,5 +1,5 @@
-cooler/bin/
-cooler/obj/
-cooler/publish/
+bin/
+obj/
+app/publish/
 installer/app/
 installer/out/

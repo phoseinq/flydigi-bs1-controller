@@ -1,93 +1,49 @@
 using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
-using WinForms = System.Windows.Forms;
 
 namespace Bs1Cooler;
 
-public static class Program
+public static class SelfTest
 {
-    [STAThread]
-    public static void Main(string[] args)
-    {
-        if (args.Contains("--selftest")) { Environment.Exit(SelfTest()); return; }
-        // dev helper: Bs1Cooler.dll --light '{"Mode":"Wave","Colors":["#3EC1B5"]}' -> hex for preview.hex
-        if (args is ["--anim", var bright])  // dev helper: boot animation hex
-        {
-            Console.WriteLine(Convert.ToHexString(new Lighting { Brightness = int.Parse(bright) }.BootAnimation()));
-            return;
-        }
-        if (args is ["--light", var json, ..])
-        {
-            // optional: °C, rpm (temperature wave color / tempo)
-            var light = Settings.ParseLighting(json);
-            string? color = args.Length > 2 ? Lighting.TemperatureColor(double.Parse(args[2])).color : null;
-            Console.WriteLine(Convert.ToHexString(light.Config(color)));
-            return;
-        }
-        using var single = new Mutex(true, @"Local\Bs1Cooler", out bool first);
-        if (!first) return;  // ponytail: second launch just exits; the tray icon is the way back in
-
-        var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown, ThemeMode = ThemeMode.Dark };
-        var ctl = new Controller();
-        var win = new MainWindow(ctl);
-
-        using var tray = new WinForms.NotifyIcon
-        {
-            Icon = new System.Drawing.Icon(Application.GetResourceStream(new Uri("pack://application:,,,/cooler.ico")).Stream),
-            Text = "BS1 Cooler",
-            Visible = true,
-            ContextMenuStrip = new WinForms.ContextMenuStrip(),
-        };
-        var menu = tray.ContextMenuStrip;
-        menu.Items.Add("Open", null, (_, _) => ShowNearTray(win));
-        menu.Items.Add("Turn on", null, (_, _) => ctl.SetOn(true));
-        menu.Items.Add("Turn off", null, (_, _) => ctl.SetOn(false));
-        menu.Items.Add(new WinForms.ToolStripSeparator());
-        menu.Items.Add("Exit", null, (_, _) => app.Shutdown());
-        tray.MouseClick += (_, e) =>
-        {
-            if (e.Button != WinForms.MouseButtons.Left) return;
-            if (win.IsVisible) win.Hide(); else ShowNearTray(win);
-        };
-        ctl.Changed += () => app.Dispatcher.BeginInvoke(() =>
-        {
-            string t = $"BS1 Cooler – {ctl.Status}";
-            tray.Text = t.Length > 63 ? t[..63] : t;  // NotifyIcon limit
-        });
-
-        SetProcessShutdownParameters(0x3FF, 0);  // first in line for session end: more Bluetooth time
-        app.SessionEnding += (_, e) =>
-        {
-            // reason = Windows waits for us (shows it only if we're slow) instead of killing us at ~5 s
-            var hwnd = new System.Windows.Interop.WindowInteropHelper(win).EnsureHandle();
-            ShutdownBlockReasonCreate(hwnd, "Turning off the cooler");
-            ctl.PowerDown($"session ending ({e.ReasonSessionEnding})");
-            ShutdownBlockReasonDestroy(hwnd);
-        };
-        Controller.DevHooks = args.Contains("--dev");
-        Task.Run(ctl.RunAsync);
-        if (!args.Contains("--tray")) ShowNearTray(win);
-        app.Run();
-        tray.Visible = false;
-    }
-
-    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
-    private static extern bool ShutdownBlockReasonCreate(IntPtr hwnd, string reason);
-    [System.Runtime.InteropServices.DllImport("user32.dll")]
-    private static extern bool ShutdownBlockReasonDestroy(IntPtr hwnd);
-    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
-    private static extern bool SetProcessShutdownParameters(uint level, uint flags);
-
     /// Checks the byte-level bits against frames captured from Space Station.
-    private static int SelfTest()
+    public static int Run()
     {
         static void Check(bool ok, string what) { if (!ok) throw new Exception("FAIL: " + what); }
         try
         {
             Check(Convert.ToHexString(CoolerDevice.Frame(70, new byte[] { 0 })) == "5AA546030049", "frame checksum");
+            var n0 = new TimeOnly(23, 30); var n1 = new TimeOnly(6, 59); var n2 = new TimeOnly(7, 0); var n3 = new TimeOnly(12, 0);
+            Check(Settings.InRange(n0, "23:00", "07:00") && Settings.InRange(n1, "23:00", "07:00") && !Settings.InRange(n2, "23:00", "07:00")
+                  && !Settings.InRange(n3, "23:00", "07:00") && Settings.InRange(n3, "09:00", "17:00") && !Settings.InRange(n3, "x", "07:00"), "night hours, across midnight");
+            var call = new MediaGate(TimeSpan.Zero); var c0 = new DateTime(2026, 1, 1);
+            Check(call.Update(true, c0) && call.Update(false, c0.AddSeconds(29)) && !call.Update(false, c0.AddSeconds(31)), "calls: quiet at once, 30 s hold");
+            {
+                var q = new Settings(); var noon = new TimeOnly(12, 0); var late = new TimeOnly(23, 30);
+                Signals Sig(bool mic = false, bool bat = false, bool dnd = false) => new(mic, bat, dnd, false);
+                Check(Controller.QuietReasonFor(q, false, false, false, Sig(), noon) == null, "quiet: nothing going on");
+                Check(Controller.QuietReasonFor(q, false, true, true, Sig(), late) == "Call", "quiet: a call names itself first");
+                Check(Controller.QuietReasonFor(q, false, false, true, Sig(), noon) == "Media", "quiet: media");
+                Check(Controller.QuietReasonFor(q, false, false, false, Sig(dnd: true), noon) == "Do Not Disturb", "quiet: DND / presenting");
+                Check(Controller.QuietReasonFor(q, false, false, false, Sig(), late) == "Night", "quiet: night");
+                Check(Controller.QuietReasonFor(q, false, false, false, Sig(bat: true), noon) == "Battery", "quiet: battery");
+                Check(Controller.QuietReasonFor(q, false, false, false, null, late) == "Night", "quiet: night needs no OS signals");
+                Check(Controller.QuietReasonFor(q, true, true, true, Sig(true, true, true), late) == null, "quiet: heavy load beats every reason");
+                q.QuietAtNight = q.QuietOnBattery = q.QuietOnDnd = false;
+                Check(Controller.QuietReasonFor(q, false, false, false, Sig(true, true, true), late) == null, "quiet: switched-off reasons don't count");
+            }
+            var ls = new Settings();
+            Check(ls.LoadRpm(5) == 1300 && ls.LoadRpm(40) == 1900 && ls.LoadRpm(55) == 2150 && ls.LoadRpm(100) == 2800, "load floor");
+            var cs = new Settings();
+            Check(cs.CurveRpm(40) == 1300 && cs.CurveRpm(50) == 1300 && cs.CurveRpm(55) == 1550 && cs.CurveRpm(70) == 2300, "curve: lowest speed while cool");
+            {
+                var g = new MediaGate(); var t0 = new DateTime(2026, 1, 1);
+                bool At(double sec, bool sound) => g.Update(sound, t0.AddSeconds(sec));
+                Check(!At(0, true) && !At(2, true) && !At(4, true), "quiet: not before 6 s of sound");
+                Check(At(6, true), "quiet: on after 6 s");
+                Check(At(20, false) && At(35, false) && !At(36, false), "quiet: holds through 30 s of silence, then off");
+                var b = new MediaGate();
+                Check(!b.Update(true, t0) && !b.Update(false, t0.AddSeconds(2)) && !b.Update(false, t0.AddSeconds(8)) && !b.Update(true, t0.AddSeconds(10)) && !b.Update(true, t0.AddSeconds(14)), "quiet: a beep then a gap resets the count");
+                Check(b.Update(true, t0.AddSeconds(16)), "quiet: 6 s of the new run");
+            }
             var teal = new Lighting { Mode = LightMode.Static, Colors = new() { "#00FFBB" }, Brightness = 20 }.Config();
             Check(teal.Length == 96, "config length");
             Check(Convert.ToHexString(teal, 0, 10) == "000200000F1400FFBB00", "static config head (Space Station chunk 0)");
@@ -120,19 +76,14 @@ public static class Program
             Check(boot[6 + 24] == 0 && boot[66 + 27] == 0 && boot[6 + 21] == 0xFF, "boot: glow, then 2 dark slots for the handover");
             Check(new Lighting().Mode == LightMode.TemperatureBreathe && new Lighting().Brightness == 22, "defaults = temperature wave");
             var s = new Settings();
-            Check(s.CurveRpm(0) == 1300 && s.CurveRpm(55) == 1850 && s.CurveRpm(95) == 3000, "curve");
+            Check(s.CurveRpm(0) == 1300 && s.CurveRpm(55) == 1550 && s.CurveRpm(95) == 3000, "curve");
+            // WCH ISP (wchisp's encoding): identify is cmd, len 0x12, ids, magic; key from this cooler's UID
+            Check(Convert.ToHexString(WchIsp.Identify()) == "A112000000" + "4D4355204953502026205743482E434E", "isp identify");
+            var key = WchIsp.Key(Convert.FromHexString("EFCE9A10535CDC3B"));
+            Check(key[0] == 0x2D && key[6] == 0x2D && key[7] == 0x2D + 0x71, "isp key");
             Console.WriteLine("selftest ok");
             return 0;
         }
         catch (Exception e) { Console.WriteLine(e.Message); return 1; }
-    }
-
-    private static void ShowNearTray(Window w)
-    {
-        var area = SystemParameters.WorkArea;
-        w.Show();
-        w.Left = area.Right - w.ActualWidth - 12;
-        w.Top = area.Bottom - w.ActualHeight - 12;
-        w.Activate();
     }
 }

@@ -14,9 +14,9 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Build
-        run: dotnet build cooler -c Release
+        run: dotnet build app -c Release
       - name: Self-test
         run: |
-          $dll = Get-ChildItem cooler/bin/Release -Recurse -Filter Bs1Cooler.dll | Select-Object -First 1
+          $dll = Get-ChildItem app/bin/Release -Recurse -Filter Bs1Cooler.dll | Select-Object -First 1
           dotnet $dll.FullName --selftest
           if ($LASTEXITCODE) { throw "self-test failed ($LASTEXITCODE)" }

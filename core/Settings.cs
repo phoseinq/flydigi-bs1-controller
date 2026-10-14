@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
@@ -15,15 +16,41 @@ public class Settings
     public bool SoftOff { get; set; }  // the user's on/off choice; also what StartupMode.Keep restores
     public FanMode FanMode { get; set; } = FanMode.Smart;
     public int FixedRpm { get; set; } = 1300;
-    /// Smart curve: (°C, rpm), linear in between. Default = Space Station's own curve.
-    public List<int[]> Curve { get; set; } = new() { new[] { 0, 1300 }, new[] { 50, 1700 }, new[] { 60, 2000 }, new[] { 70, 2300 }, new[] { 80, 2500 }, new[] { 85, 2700 }, new[] { 90, 3000 } };
+    /// Smart curve: (°C, rpm), linear in between. Lowest speed up to 50 °C (a laptop idles at 40-50 °C), then
+    /// back to Space Station's own curve by 70 °C.
+    public List<int[]> Curve { get; set; } = DefaultCurve();
+    public static List<int[]> DefaultCurve() => new() { new[] { 0, 1300 }, new[] { 50, 1300 }, new[] { 60, 1800 }, new[] { 70, 2300 }, new[] { 80, 2500 }, new[] { 85, 2700 }, new[] { 90, 3000 } };
+    // Space Station's curve, our default until 2026-10-14: saved copies of it move to the new default
+    private static readonly int[] OldDefault = { 0, 1300, 50, 1700, 60, 2000, 70, 2300, 80, 2500, 85, 2700, 90, 3000 };
     public bool OffOnShutdown { get; set; } = true;
+    /// Load floor (%, rpm): heavy work gets air before the heat shows, because the laptop's own fans hold the
+    /// temperature down by getting loud. Fan = the higher of this and the temperature curve.
+    public List<int[]> LoadCurve { get; set; } = new() { new[] { 20, 1300 }, new[] { 40, 1900 }, new[] { 70, 2400 }, new[] { 90, 2800 } };
+    public int LoadRpm(double load) => Interpolate(LoadCurve, load);
     public bool QuietWhenMedia { get; set; } = true;
+    public bool QuietOnCalls { get; set; } = true;     // microphone in use
+    public bool QuietAtNight { get; set; } = true;
+    public string NightFrom { get; set; } = "23:00";
+    public string NightTo { get; set; } = "07:00";
+    public bool QuietOnBattery { get; set; } = true;
+    public bool QuietOnDnd { get; set; } = true;       // Do Not Disturb or presentation mode
+    public bool LightsOffWhenLocked { get; set; } = true;
+
+    /// Is `now` inside from..to (local clock, "HH:mm"); the range may cross midnight.
+    public static bool InRange(TimeOnly now, string from, string to)
+    {
+        if (!TimeOnly.TryParse(from, out var f) || !TimeOnly.TryParse(to, out var t) || f == t) return false;
+        return f < t ? now >= f && now < t : now >= f || now < t;
+    }
     /// Calibration: seconds one breath takes per unit of Period (cycle = 2 slots x Period x this).
     /// Measured by eye on the real cooler; used to resend the temperature wave exactly at its dark point.
     public double BreathSecondsPerUnit { get; set; } = 0.091;  // measured on the real cooler
     public StartupMode OnStartup { get; set; } = StartupMode.On;
     public bool AutoConnect { get; set; } = true;
+    public bool SetupDone { get; set; }  // first-run setup finished or skipped
+    /// Which firmware the app keeps the cooler on; Beta also shows the debug tools.
+    public Edition Edition { get; set; } = Edition.Custom;
+    public string Language { get; set; } = "";  // en, fa, zh; empty = from Windows
     public Lighting Light { get; set; } = new();
 
     public static readonly string Dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Bs1Cooler");
@@ -32,7 +59,12 @@ public class Settings
 
     public static Settings Load()
     {
-        try { return JsonSerializer.Deserialize<Settings>(File.ReadAllText(FilePath), Opts) ?? new(); }
+        try
+        {
+            var s = JsonSerializer.Deserialize<Settings>(File.ReadAllText(FilePath), Opts) ?? new();
+            if (s.Curve.SelectMany(p => p).SequenceEqual(OldDefault)) s.Curve = DefaultCurve();
+            return s;
+        }
         catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException) { return new(); }
         catch (Exception e) { Log.Write("settings unreadable, using defaults: " + e.Message); return new(); }
     }
@@ -49,9 +81,10 @@ public class Settings
         catch (Exception e) { Log.Write("settings save failed: " + e.Message); }
     }
 
-    public int CurveRpm(double temp)
+    public int CurveRpm(double temp) => Interpolate(Curve, temp);
+
+    private static int Interpolate(List<int[]> pts, double temp)
     {
-        var pts = Curve;
         if (temp <= pts[0][0]) return pts[0][1];
         for (int i = 1; i < pts.Count; i++)
         {
@@ -66,6 +99,8 @@ public class Settings
 /// TemperatureBreathe (beta) is ours: a steady color that follows fan speed (name kept for saved settings).
 /// Wave (beta). One color = all zones breathe together, each zone a bit dimmer (same hue, Breathe's timing);
 /// several colors = a color wave, each zone a third of a cycle behind the previous one.
+public enum Edition { Official, Custom, Beta }
+
 public enum LightMode { Static, Breathe, Twinkle, Fade, Temperature, TemperatureBreathe, Wave }
 
 /// Defaults = the temperature wave as tuned with the user; restored on every app start.
@@ -211,6 +246,18 @@ public class Lighting
 
     private static (byte, byte, byte) Scale((byte r, byte g, byte b) c, double f) =>
         ((byte)Math.Round(c.r * f), (byte)Math.Round(c.g * f), (byte)Math.Round(c.b * f));
+
+    /// Manual fan mode's light: the warm white of the firmware's power-down animation (zones 1-3).
+    public static readonly string[] ManualColors = { "#FFB878", "#FFC890", "#FFD8A8" };
+
+    /// Zone colors for the firmware's steady-color command (0x4E): 3 x RGB.
+    public byte[] ZoneRgb()
+    {
+        var z = ZoneColors is { Count: 3 } ? ZoneColors : new List<string> { Colors[0], Colors[0], Colors[0] };
+        var rgb = new byte[9];
+        for (int i = 0; i < 3; i++) (rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]) = Parse(z[i]);
+        return rgb;
+    }
 
     private static (byte, byte, byte) Parse(string hex)
     {
