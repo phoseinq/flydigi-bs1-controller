@@ -55,8 +55,10 @@ public partial class MainWindow
     private void RefreshFirmware()
     {
         UpdateBar.IsOpen = NeedsUpdate && !UpdatePage.IsVisible;
-        if (ctl.FirmwarePatch > 0 && ctl.FirmwarePatch < CustomVersion)
-            (UpdateBar.Title, UpdateBar.Message) = (Tx.Tr("Firmware update"), Tx.Tr("Version {0} of the BS1 Cooler firmware is ready.", CustomVersion));
+        (UpdateBar.Title, UpdateBar.Message) =
+            S.Edition == Edition.Official && ctl.FirmwarePatch > 0 ? (Tx.Tr("Firmware"), Tx.Tr("You chose the official firmware; the cooler runs the BS1 Cooler firmware."))
+            : ctl.FirmwarePatch > 0 ? (Tx.Tr("Firmware update"), Tx.Tr("Version {0} of the BS1 Cooler firmware is ready.", CustomVersion))
+            : (Tx.Tr("Firmware update"), Tx.Tr("Your cooler's firmware is old: it can't start by itself after a power cut."));
         UpdateBtn.IsEnabled = OperatingSystem.IsWindows() && !flashing;  // flashing needs WCH's Windows driver
         FirmwareDesc.Text = !ctl.Dev.Connected ? Tx.Tr("Cooler not connected")
             : ctl.FirmwarePatch > 0 ? $"BS1 Cooler {ctl.FirmwarePatch} · Flydigi {ctl.FirmwareVersion}"

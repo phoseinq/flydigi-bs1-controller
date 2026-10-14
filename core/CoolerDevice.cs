@@ -151,12 +151,18 @@ public sealed class CoolerDevice
 
     /// Sends a command and returns the reply payload (bytes after the length byte, without checksum),
     /// or null after 3 unanswered tries.
-    public async Task<byte[]?> SendAsync(byte cmd, params byte[] payload)
+    public Task<byte[]?> SendAsync(byte cmd, params byte[] payload) => Send(cmd, payload, tries: 3, wait: 800);
+
+    /// One short try for a command the cooler may not know (official firmware ignores 0x49): no retries,
+    /// and no reply doesn't count toward "link stale".
+    public Task<byte[]?> ProbeAsync(byte cmd) => Send(cmd, [], tries: 1, wait: 300);
+
+    private async Task<byte[]?> Send(byte cmd, byte[] payload, int tries, int wait)
     {
         await io.WaitAsync();
         try
         {
-            for (int attempt = 0; attempt < 3; attempt++)
+            for (int attempt = 0; attempt < tries; attempt++)
             {
                 if (!Connected) return null;
                 pending = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -164,8 +170,8 @@ public sealed class CoolerDevice
                 try
                 {
                     if (!await WriteFrame(Frame(cmd, payload))) continue;
-                    var done = await Task.WhenAny(pending.Task, Task.Delay(800));
-                    if (done != pending.Task) Log.Write($"cmd {cmd}: retry {attempt + 1}");
+                    var done = await Task.WhenAny(pending.Task, Task.Delay(wait));
+                    if (done != pending.Task && tries > 1) Log.Write($"cmd {cmd}: retry {attempt + 1}");
                     if (done == pending.Task)
                     {
                         byte[] r = pending.Task.Result;
@@ -176,6 +182,7 @@ public sealed class CoolerDevice
                 }
                 catch (Exception e) { Log.Write($"cmd {cmd} write failed: {e.Message}"); }
             }
+            if (tries == 1) return null;  // a probe: silence is an answer
             Log.Write($"cmd {cmd}: no reply");
             // Windows can silently re-establish the link and drop our notify subscription:
             // writes still "succeed" but nothing comes back. Tear down and reconnect from scratch.
@@ -213,7 +220,7 @@ public sealed class CoolerDevice
             r[0] = 1;
             frame.CopyTo(r, 1);
             if (r.Length >= 32) { byte sum = 0; for (int i = 0; i < 31; i++) sum += r[i]; r[31] = sum; }
-            await h.WriteAsync(r);
+            await h.WriteAsync(r).AsTask().WaitAsync(TimeSpan.FromSeconds(2));
             return true;
         }
         return await ble.WriteAsync(frame);

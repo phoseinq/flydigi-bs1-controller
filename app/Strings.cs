@@ -63,7 +63,7 @@ public static class Tx
         ["Media and sound"] = ("پخش و صدا", "媒体和声音"),
         ["Any app playing sound for 6 s; ends after 30 s of silence"] = ("هر برنامه‌ای که ۶ ثانیه صدا پخش کنه؛ بعد از ۳۰ ثانیه سکوت تموم می‌شه", "任何应用播放声音 6 秒后开启；安静 30 秒后结束"),
         ["Do Not Disturb"] = ("مزاحم نشوید", "勿扰"),
-        ["Calls"] = ("تماس‌ها", "通话"),
+        ["Calls"] = ("تماس‌ها", "通话时"),
         ["While an app uses the microphone"] = ("وقتی برنامه‌ای از میکروفون استفاده می‌کنه", "有应用使用麦克风时"),
         ["Also while presenting"] = ("موقع ارائه هم", "演示时也会开启"),
         ["On battery"] = ("روی باتری", "使用电池时"),
@@ -80,8 +80,8 @@ public static class Tx
         ["Runs in the tray when you sign in"] = ("بعد از ورود به ویندوز کنار ساعت اجرا می‌شه", "登录后在托盘中运行"),
         ["When the app opens"] = ("وقتی برنامه باز می‌شه", "应用启动时"),
         ["What the cooler does"] = ("کولر چی کار کنه", "散热器的状态"),
-        ["Turn on"] = ("روشن شه", "打开"),
-        ["Turn off"] = ("خاموش شه", "关闭"),
+        ["Turn on"] = ("روشن شه", "开启"),
+        ["Turn off"] = ("خاموش شه", "关掉"),
         ["Keep as is"] = ("همون‌طور بمونه", "保持不变"),
         ["Off at shutdown and sleep"] = ("خاموش با خاموشی و Sleep", "关机和睡眠时关闭"),
         ["Fan and lights go off with the PC"] = ("فن و نور با کامپیوتر خاموش می‌شن", "风扇和灯光随电脑关闭"),
@@ -128,12 +128,14 @@ public static class Tx
         ["Skip"] = ("رد کردن", "跳过"),
         ["Next"] = ("بعدی", "下一步"),
         ["Finish"] = ("تمام", "完成"),
-        ["Update firmware"] = ("آپدیت فریم‌ور", "更新固件"),
+        ["Update firmware"] = ("فریم‌ور رو آپدیت کن", "更新固件"),
         // firmware update
         ["Firmware update"] = ("آپدیت فریم‌ور", "固件更新"),
         ["Version {0} of the BS1 Cooler firmware is ready."] = ("نسخه‌ی {0} فریم‌ور BS1 Cooler آماده‌ست.", "BS1 Cooler 固件 {0} 版已就绪。"),
+        ["You chose the official firmware; the cooler runs the BS1 Cooler firmware."] =
+            ("فریم‌ور رسمی رو انتخاب کردی؛ کولر الان فریم‌ور BS1 Cooler داره.", "你选择了官方固件；散热器当前运行的是 BS1 Cooler 固件。"),
         ["Your cooler's firmware is old: it can't start by itself after a power cut."] = ("فریم‌ور کولرت قدیمیه: بعد از قطع برق خودش روشن نمی‌شه.", "散热器固件过旧：断电后无法自动启动。"),
-        ["Updating"] = ("آپدیت", "更新"),
+        ["Updating"] = ("در حال آپدیت", "正在更新"),
         ["Now on the cooler: {0}."] = ("الان روی کولر: {0}.", "散热器当前固件：{0}。"),
         ["The cooler isn't connected; you can still update it."] = ("کولر وصل نیست، ولی باز هم می‌تونی آپدیتش کنی.", "散热器未连接，但仍可更新。"),
         ["BS1 Cooler firmware (recommended)"] = ("فریم‌ور BS1 Cooler (پیشنهادی)", "BS1 Cooler 固件（推荐）"),
@@ -170,7 +172,7 @@ public static class Tx
         ["Don't unplug the cooler. This takes about 10 seconds."] = ("کابل کولر رو نکش. حدود ۱۰ ثانیه طول می‌کشه.", "请勿拔下散热器。大约需要 10 秒。"),
         ["Updated"] = ("آپدیت شد", "已更新"),
         ["That didn't work"] = ("انجام نشد", "未成功"),
-        ["Done"] = ("تمام", "完成"),
+        ["Done"] = ("باشه", "好"),
         ["Close"] = ("بستن", "关闭"),
         ["The cooler restarted with the BS1 Cooler firmware. It reconnects by itself in a few seconds."] =
             ("کولر با فریم‌ور BS1 Cooler ری‌استارت شد. تا چند ثانیه‌ی دیگه خودش دوباره وصل می‌شه.", "散热器已使用 BS1 Cooler 固件重启，几秒后会自动重新连接。"),
@@ -184,4 +186,10 @@ public static class Tx
     private static readonly Dictionary<string, string> Back = T
         .SelectMany(kv => new[] { (kv.Key, kv.Key), (kv.Value.Fa, kv.Key), (kv.Value.Zh, kv.Key) })
         .GroupBy(x => x.Item1).ToDictionary(g => g.Key, g => g.First().Item2);
+
+    /// Texts whose translation is shared with another English text (then switching language can't tell them apart).
+    public static string[] Collisions() => T
+        .SelectMany(kv => new[] { (kv.Key, kv.Key), (kv.Value.Fa, kv.Key), (kv.Value.Zh, kv.Key) })
+        .GroupBy(x => x.Item1).Where(g => g.Select(x => x.Item2).Distinct().Count() > 1)
+        .Select(g => $"{g.Key}: {string.Join(" / ", g.Select(x => x.Item2).Distinct())}").ToArray();
 }

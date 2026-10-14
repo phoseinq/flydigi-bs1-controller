@@ -3,3 +3,6 @@ obj/
 app/publish*/
 installer/app/
 installer/out/
+firmware/*.bin
+firmware/*.hex
+firmware/custom/

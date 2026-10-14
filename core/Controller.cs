@@ -244,7 +244,7 @@ public sealed class Controller
             if (justConnected)
             {
                 justConnected = false;
-                fwPatch = await Dev.SendAsync(0x49) is [0x42, 0x53, 0x31, 0x43, var v, ..] ? v : 0;
+                fwPatch = await Dev.ProbeAsync(0x49) is [0x42, 0x53, 0x31, 0x43, var v, ..] ? v : 0;
                 if (await Dev.SendAsync(1) is [var v0, var v1, var v2, var v3, ..]) FirmwareVersion = $"{v0}.{v1}.{v2}.{v3:00}";
                 Log.Write($"firmware {FirmwareVersion}{(fwPatch > 0 ? $" + custom {fwPatch}" : "")}");
                 lastSentRpm = lastTempBand = -1;
