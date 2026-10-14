@@ -15,8 +15,8 @@ conflicts=('bs1cooler')
 options=('!strip' '!debug')
 source=("$url/releases/download/v$pkgver/BS1Cooler-$pkgver-linux-x64.tar.gz"
         "LICENSE-$pkgver::https://raw.githubusercontent.com/phoseinq/flydigi-bs1-controller/v$pkgver/LICENSE")
-sha256sums=('SKIP_UNTIL_RELEASE'
-            'SKIP_UNTIL_RELEASE')
+sha256sums=('c6e06460c2dbeb1216a46bfb9106e6887f09e96478858ec57bf3c8c682bc45cf'
+            'ca0867790471a77ad39cebe1b33a5475f15a8a34af9a27fc96e93903cf34f802')
 
 package() {
   install -d "$pkgdir/opt" "$pkgdir/usr/bin"

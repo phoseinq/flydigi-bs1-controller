@@ -1,0 +1,25 @@
+pkgbase = bs1cooler-bin
+	pkgdesc = Fan and lights for the Flydigi BS1 laptop cooler (tray app)
+	pkgver = 2.0.2
+	pkgrel = 1
+	url = https://github.com/phoseinq/flydigi-bs1-controller
+	arch = x86_64
+	license = MIT
+	depends = fontconfig
+	depends = libx11
+	depends = libice
+	depends = libsm
+	depends = icu
+	optdepends = bluez: connect over Bluetooth
+	optdepends = libpulse: quiet mode while sound plays or the mic is in use (pactl)
+	optdepends = nvidia-utils: NVIDIA GPU temperature and load
+	provides = bs1cooler
+	conflicts = bs1cooler
+	options = !strip
+	options = !debug
+	source = https://github.com/phoseinq/flydigi-bs1-controller/releases/download/v2.0.2/BS1Cooler-2.0.2-linux-x64.tar.gz
+	source = LICENSE-2.0.2::https://raw.githubusercontent.com/phoseinq/flydigi-bs1-controller/v2.0.2/LICENSE
+	sha256sums = c6e06460c2dbeb1216a46bfb9106e6887f09e96478858ec57bf3c8c682bc45cf
+	sha256sums = ca0867790471a77ad39cebe1b33a5475f15a8a34af9a27fc96e93903cf34f802
+
+pkgname = bs1cooler-bin
