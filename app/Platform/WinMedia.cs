@@ -2,32 +2,22 @@ using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using Windows.Media.Control;
 
 namespace Bs1Cooler;
 
-/// "Is anything playing?" for quiet mode: Windows' media sessions (browsers, Spotify, Netflix...) or any app
-/// that is making sound right now, per Windows' own audio meters (VLC, MPC, games, calls: no player list).
+/// "Is anything playing?" for quiet mode: any app making sound right now, per Windows' own audio meters
+/// (browsers, Spotify, VLC, games, calls: no player list).
 public static class WinMedia
 {
-    private static GlobalSystemMediaTransportControlsSessionManager? media;
-
     private static string? lastSource;
 
-    public static async Task<bool> IsPlaying()
+    /// Real sound only: players' "playing" status isn't trusted (Spotify and Telegram report it while silent).
+    public static Task<bool> IsPlaying()
     {
-        string? source = null;
-        try
-        {
-            media ??= await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
-            source = media.GetSessions().FirstOrDefault(s => s.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
-                ?.SourceAppUserModelId is { } app ? "media session " + app : null;
-        }
-        catch { }  // no media sessions (Windows Server, N editions): the meters still work
-        source ??= SoundSource();
+        string? source = SoundSource();
         // which app it was, once per change: "quiet: Media" alone doesn't say what made the sound
         if (source != null && source != lastSource) { lastSource = source; Log.Write("sound from " + source); }
-        return source != null;
+        return Task.FromResult(source != null);
     }
 
     /// Any app (not system sounds, not us) with audio above silence on any active output device.

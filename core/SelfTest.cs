@@ -47,12 +47,17 @@ public static class SelfTest
             {
                 var g = new MediaGate(); var t0 = new DateTime(2026, 1, 1);
                 bool At(double sec, bool sound) => g.Update(sound, t0.AddSeconds(sec));
-                Check(!At(0, true) && !At(2, true) && !At(4, true), "quiet: not before 6 s of sound");
-                Check(At(6, true), "quiet: on after 6 s");
-                Check(At(20, false) && At(35, false) && !At(36, false), "quiet: holds through 30 s of silence, then off");
-                var b = new MediaGate();
-                Check(!b.Update(true, t0) && !b.Update(false, t0.AddSeconds(2)) && !b.Update(false, t0.AddSeconds(8)) && !b.Update(true, t0.AddSeconds(10)) && !b.Update(true, t0.AddSeconds(14)), "quiet: a beep then a gap resets the count");
-                Check(b.Update(true, t0.AddSeconds(16)), "quiet: 6 s of the new run");
+                bool on = false;
+                for (int i = 0; i < 10; i++) on |= At(i, true);
+                Check(!on, "quiet: not before 10 s of sound");
+                Check(At(10, true), "quiet: on after 10 s of steady sound");
+                Check(At(25, false) && At(39, false) && !At(40, false), "quiet: holds through 30 s of silence, then off");
+                var b = new MediaGate(); bool any = false;
+                for (int i = 0; i <= 60; i++) any |= b.Update(i % 3 == 0, t0.AddSeconds(i));  // a notification every 3 s
+                Check(!any, "quiet: separate notifications never add up");
+                var m = new MediaGate(); bool late = false;
+                for (int i = 0; i <= 12; i++) late |= m.Update(i % 2 == 0, t0.AddSeconds(i));  // music, a missed sample now and then
+                Check(late, "quiet: one missed sample doesn't break a song");
             }
             var teal = new Lighting { Mode = LightMode.Static, Colors = new() { "#00FFBB" }, Brightness = 20 }.Config();
             Check(teal.Length == 96, "config length");

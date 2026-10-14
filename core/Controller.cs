@@ -445,6 +445,7 @@ public sealed class Controller
                 if (p[0] == "wait") { await Task.Delay(int.Parse(p[1])); continue; }
                 if (p[0] == "sensors") { Log.Write("all temps: " + temps?.Dump()); continue; }
                 // parked 6 s so the off state is visible before normal operation resumes
+                if (p[0] == "drop") { Dev.Disconnect(); Log.Write("debug: link dropped"); continue; }  // a lost link, as when a cable is pulled
                 if (p[0] == "powerdown") { _ = Task.Run(async () => { PowerDown("session test"); await Task.Delay(6000); poweringDown = false; lightDirty = true; }); continue; }
                 if (p[0] == "light")
                 {
@@ -665,7 +666,17 @@ public sealed class Controller
     public void PowerDown(string why)
     {
         Log.Write("power down: " + why);
-        if (!S.OffOnShutdown || !Dev.Connected) return;
+        if (!S.OffOnShutdown) return;
+        if (!Dev.Connected && !UserDisconnected)
+        {
+            // the link dropped shortly before (cable pulled, Bluetooth still reconnecting): one quick try, since
+            // Windows takes Bluetooth down 2-4 s into a shutdown. Off the UI thread: its continuations would deadlock here.
+            var c = Task.Run(Dev.ConnectAsync);
+            bool ok = c.Wait(3000) && c.Result;
+            Log.Write($"power down: reconnect {(ok ? "ok" : "failed")}");
+            if (!ok) return;
+        }
+        if (!Dev.Connected) return;
         poweringDown = true;
         // blocks the caller (Program holds a ShutdownBlockReason meanwhile, so Windows waits)
         Task.Run(async () =>
@@ -685,19 +696,20 @@ public sealed class Controller
     }
 }
 
-/// Turns the raw "sound right now?" samples into quiet mode on/off without flicker: on after 6 s of sound
-/// (a notification or a click doesn't count), off after 30 s of silence (quiet film scenes, gaps between songs).
+/// Turns the raw "sound right now?" samples into quiet mode on/off without flicker: on after 10 s of steady sound
+/// (a silence over 2.5 s starts the count again, so notifications never add up), off after 30 s of silence
+/// (quiet film scenes, gaps between songs).
 public sealed class MediaGate(TimeSpan? enter = null)
 {
-    public static readonly TimeSpan Leave = TimeSpan.FromSeconds(30), Gap = TimeSpan.FromSeconds(4);
-    private readonly TimeSpan Enter = enter ?? TimeSpan.FromSeconds(6);
+    public static readonly TimeSpan Leave = TimeSpan.FromSeconds(30), Gap = TimeSpan.FromSeconds(2.5);
+    private readonly TimeSpan Enter = enter ?? TimeSpan.FromSeconds(10);
     private DateTime? since;  // start of the current run of sound
     private DateTime last;    // last time sound was heard
     public bool On { get; private set; }
 
     public bool Update(bool sound, DateTime now)
     {
-        if (sound) { since ??= now; last = now; }
+        if (sound) { if (now - last > Gap) since = now; since ??= now; last = now; }  // sound after a gap: a new run
         else if (now - last > Gap) since = null;  // the run broke before quiet mode started
         if (!On && since is DateTime s && now - s >= Enter) On = true;
         else if (On && now - last >= Leave) On = false;

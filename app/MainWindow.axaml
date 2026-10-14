@@ -231,7 +231,7 @@
               <TextBlock Classes="desc" Margin="0,0,0,4" Text="Slower fan and dimmer lights. Never under heavy load or above 70 °C: cooling always wins." />
               <Grid Classes="row" ColumnDefinitions="Auto,*,Auto">
                 <ic:SymbolIcon Symbol="MoviesAndTv" />
-                <StackPanel Grid.Column="1"><TextBlock Text="Media and sound" /><TextBlock Classes="desc" Text="Any app playing sound for 6 s; ends after 30 s of silence" /></StackPanel>
+                <StackPanel Grid.Column="1"><TextBlock Text="Media and sound" /><TextBlock Classes="desc" Text="Any app playing sound for 10 s straight; ends after 30 s of silence" /></StackPanel>
                 <ToggleSwitch Grid.Column="2" Name="QuietWhenMedia" OnContent="" OffContent="" />
               </Grid>
               <Separator />

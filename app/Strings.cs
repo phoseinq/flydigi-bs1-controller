@@ -61,7 +61,7 @@ public static class Tx
         ["Slower fan and dimmer lights. Never under heavy load or above 70 °C: cooling always wins."] =
             ("فن آروم‌تر و نور کم‌تر. هیچ‌وقت زیر بار سنگین یا بالای ۷۰ درجه: خنک‌کردن همیشه اولویت داره.", "风扇更慢、灯光更暗。高负载或高于 70 °C 时不生效：散热始终优先。"),
         ["Media and sound"] = ("پخش و صدا", "媒体和声音"),
-        ["Any app playing sound for 6 s; ends after 30 s of silence"] = ("هر برنامه‌ای که ۶ ثانیه صدا پخش کنه؛ بعد از ۳۰ ثانیه سکوت تموم می‌شه", "任何应用播放声音 6 秒后开启；安静 30 秒后结束"),
+        ["Any app playing sound for 10 s straight; ends after 30 s of silence"] = ("هر برنامه‌ای که ۱۰ ثانیه پشت سر هم صدا پخش کنه؛ بعد از ۳۰ ثانیه سکوت تموم می‌شه", "任何应用连续播放声音 10 秒后开启；静音 30 秒后结束"),
         ["Do Not Disturb"] = ("مزاحم نشوید", "勿扰"),
         ["Calls"] = ("تماس‌ها", "通话时"),
         ["While an app uses the microphone"] = ("وقتی برنامه‌ای از میکروفون استفاده می‌کنه", "有应用使用麦克风时"),
