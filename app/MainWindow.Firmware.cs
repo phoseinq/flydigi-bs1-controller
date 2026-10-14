@@ -84,7 +84,8 @@ public partial class MainWindow
     {
         S.SetupDone = true;
         ctl.Save();
-        if (!await Task.Run(TaskExists)) await SetStartWithWindows(true);
+        try { if (!await Task.Run(TaskExists)) await SetStartWithWindows(true); }
+        catch (Exception e) { Log.Write("start at login: " + e.Message); }  // async void: never let it reach the app
     }
 
     private string FirmwareName() => ctl.FirmwarePatch > 0 ? $"BS1 Cooler {ctl.FirmwarePatch}" : $"Flydigi {ctl.FirmwareVersion}";

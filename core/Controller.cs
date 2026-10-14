@@ -42,6 +42,8 @@ public sealed class Controller
     /// Screen locked: lights off (cooling goes on).
     public bool Locked { get; private set; }
     private readonly MediaGate callGate = new(enter: TimeSpan.Zero);
+    private Signals? sig;
+    private DateTime lastSignals;
     /// Quiet mode lowers the curve by up to 8 °C, but only while the laptop is cool: a quieter cooler that
     /// lets the laptop's own (louder) fans ramp up is a net loss. Full at <= 60 °C, none from 70 °C.
     private double QuietOffset => Quiet && smoothTemp is double t ? 8 * Math.Clamp((70 - t) / 10, 0, 1) : 0;
@@ -506,9 +508,13 @@ public sealed class Controller
             catch (Exception e) { Log.Write("media status unavailable: " + e.Message); }
         }
         MediaPlaying = mediaGate.Update(playing, now);
-        Signals? sig = null;
-        try { sig = platform.Signals?.Invoke(); }
-        catch (Exception e) { Log.Write("signals unavailable: " + e.Message); }
+        // every 6 s is plenty for these, and on Linux each read starts a few small processes
+        if (now - lastSignals >= TimeSpan.FromSeconds(6))
+        {
+            lastSignals = now;
+            try { sig = platform.Signals?.Invoke(); }
+            catch (Exception e) { Log.Write("signals unavailable: " + e.Message); }
+        }
         bool call = callGate.Update(S.QuietOnCalls && sig?.MicInUse == true, now);
         string? reason = QuietReasonFor(S, Heavy, call, MediaPlaying, sig, TimeOnly.FromDateTime(DateTime.Now));
         if (reason != QuietReason) Log.Write(reason != null ? $"quiet: {reason}" : "quiet off");
