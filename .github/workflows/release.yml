@@ -32,6 +32,7 @@ jobs:
 
   unix:
     strategy:
+      fail-fast: false
       matrix:
         rid: [linux-x64, osx-arm64, osx-x64]
     runs-on: ubuntu-latest

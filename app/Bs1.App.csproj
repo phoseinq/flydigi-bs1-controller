@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <!-- the -windows build gets WinRT Bluetooth and media sessions; plain net10.0 is Linux and macOS -->
     <TargetFrameworks>net10.0-windows10.0.19041.0;net10.0</TargetFrameworks>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>  <!-- restore on Linux/macOS CI sees the -windows target too -->
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>Bs1Cooler.App</RootNamespace>
