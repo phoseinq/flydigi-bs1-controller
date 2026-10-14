@@ -15,7 +15,6 @@ public sealed class LinuxBle : IBleLink
     private static readonly TimeSpan Limit = TimeSpan.FromSeconds(10);
 
     public ulong Address { get; set; }
-    public bool Connected => write != null;
     public event Action<byte[]>? Frame;
     public event Action<bool>? LinkChanged;
 

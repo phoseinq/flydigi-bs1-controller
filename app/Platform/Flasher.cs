@@ -58,13 +58,24 @@ public static class Flasher
         return false;
     }
 
+    /// The exit code, or -1 when the process didn't finish in time (then it's killed: ExitCode would throw).
+    public static int ExitCode(Process p, int ms)
+    {
+        using (p)
+        {
+            if (p.WaitForExit(ms)) return p.ExitCode;
+            try { p.Kill(entireProcessTree: true); } catch { }
+            return -1;
+        }
+    }
+
     /// WCH's signed driver package (shipped next to the exe). The app runs elevated, so no prompt.
     public static bool InstallDriver()
     {
         string inf = Path.Combine(AppContext.BaseDirectory, "ch375driver", "ch375wdm.inf");
         var p = Process.Start(new ProcessStartInfo("pnputil.exe", $"/add-driver \"{inf}\" /install") { CreateNoWindow = true, UseShellExecute = false })!;
-        p.WaitForExit(60000);
-        Log.Write($"driver install: exit {p.ExitCode}");
-        return p.ExitCode is 0 or 3010;  // 3010 = reboot suggested
+        int code = ExitCode(p, 60000);
+        Log.Write($"driver install: exit {code}");
+        return code is 0 or 3010;  // 3010 = reboot suggested
     }
 }

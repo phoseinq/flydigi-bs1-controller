@@ -9,7 +9,6 @@ public interface IBleLink
 {
     /// The cooler's address once seen (0 = not yet). Settings remember it.
     ulong Address { get; set; }
-    bool Connected { get; }
     /// Fires on every advertisement of our cooler (it only advertises while not connected).
     void StartWatching(Action seen);
     Task<bool> ConnectAsync();

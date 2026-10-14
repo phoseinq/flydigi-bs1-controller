@@ -87,7 +87,12 @@ public partial class MainWindow : Window
             t.IsCheckedChanged += (_, _) => Behaviour();
         foreach (var box in new[] { NightFrom, NightTo }) box.LostFocus += (_, _) => Behaviour();
         OnStartup.SelectionChanged += (_, _) => Behaviour();
-        StartWithWindows.IsCheckedChanged += async (_, _) => { if (!loading) await SetStartWithWindows(StartWithWindows.IsChecked == true); };
+        StartWithWindows.IsCheckedChanged += async (_, _) =>
+        {
+            if (loading) return;
+            try { await SetStartWithWindows(StartWithWindows.IsChecked == true); }
+            catch (Exception e) { Log.Write("start at login: " + e.Message); StartWithWindows.IsEnabled = true; }  // async void
+        };
         // the report goes on the clipboard: paste it into the new issue
         ReportBtn.Click += async (_, _) => { await CopyReport(); Open("https://github.com/phoseinq/flydigi-bs1-controller/issues/new"); };
         CopyReportBtn.Click += async (_, _) => await CopyReport();
@@ -277,7 +282,7 @@ public partial class MainWindow : Window
         S.FanMode = SmartRadio.IsChecked == true ? FanMode.Smart : FanMode.Fixed;
         // switching fan mode picks the matching light: color by fan speed / the manual warm white
         L.Mode = S.FanMode == FanMode.Smart ? LightMode.TemperatureBreathe : LightMode.Static;
-        if (S.FanMode == FanMode.Fixed) L.ZoneColors = new(Lighting.ManualColors);
+        L.ZoneColors = S.FanMode == FanMode.Fixed ? new(Lighting.ManualColors) : null;
         loading = true;
         EffectBox.SelectedIndex = Array.IndexOf(Effects, L.Mode);
         loading = false;
@@ -289,7 +294,9 @@ public partial class MainWindow : Window
     {
         if (loading) return;
         L.On = LightSwitch.IsChecked == true;
-        L.Mode = Effects[Math.Max(0, EffectBox.SelectedIndex)];
+        var mode = Effects[Math.Max(0, EffectBox.SelectedIndex)];
+        if (mode != L.Mode) L.ZoneColors = null;  // a new effect shows the chosen color, not old zones
+        L.Mode = mode;
         UpdateVisibility();
         ctl.Save(lightsChanged: true);
     }
@@ -375,8 +382,7 @@ public partial class MainWindow : Window
     {
         if (!OperatingSystem.IsWindows()) return System.IO.File.Exists(OperatingSystem.IsMacOS() ? MacAgent : LinuxEntry);
         var p = Process.Start(new ProcessStartInfo("schtasks.exe", $"/Query /TN \"{TaskName}\"") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true })!;
-        p.WaitForExit(5000);
-        return p.ExitCode == 0;
+        return Flasher.ExitCode(p, 5000) == 0;
     }
 
     private static int RunPowerShell(string script)
@@ -385,7 +391,6 @@ public partial class MainWindow : Window
         {
             CreateNoWindow = true, UseShellExecute = false,
         })!;
-        p.WaitForExit(15000);
-        return p.ExitCode;
+        return Flasher.ExitCode(p, 15000);
     }
 }

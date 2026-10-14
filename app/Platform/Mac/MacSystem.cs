@@ -11,7 +11,6 @@ namespace Bs1Cooler;
 public sealed class NoBle : IBleLink
 {
     public ulong Address { get; set; }
-    public bool Connected => false;
     public event Action<byte[]>? Frame { add { } remove { } }
     public event Action<bool>? LinkChanged { add { } remove { } }
     public void StartWatching(Action seen) { }

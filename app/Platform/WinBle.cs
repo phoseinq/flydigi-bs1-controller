@@ -16,7 +16,6 @@ public sealed class WinBle : IBleLink
     private static readonly TimeSpan Limit = TimeSpan.FromSeconds(10);  // WinRT GATT calls can hang when the link dies
 
     public ulong Address { get; set; }
-    public bool Connected => write != null;
     public event Action<byte[]>? Frame;
     public event Action<bool>? LinkChanged;
 
