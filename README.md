@@ -67,7 +67,7 @@ Run it again to update; add `-s -- --uninstall` after `sh` to remove. On Ubuntu,
 | Connection | USB and Bluetooth (BlueZ) | USB only |
 | Fan follows | CPU/GPU temperature (hwmon, `nvidia-smi`) and load | CPU load (macOS gives no temperatures without root) |
 | Quiet mode | sound and calls (PulseAudio or PipeWire), battery, lock, GNOME Do Not Disturb | battery |
-| Firmware update | in the app (needs the USB rule below) | from Windows |
+| Firmware update | in the app (needs the USB rule below) | in the app, experimental (not tested on a Mac yet) |
 
 With the manual download on **Linux**, allow your user to reach the cooler over USB once:
 
