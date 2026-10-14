@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/hero.svg?v=2" alt="Flydigi BS1 Controller" width="100%">
+  <img src="docs/banner.svg" alt="Flydigi BS1 Controller" width="100%">
 </p>
 
 <p align="center">
