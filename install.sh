@@ -48,7 +48,7 @@ Icon=$dest/cooler.ico
 Categories=Utility;System;
 EOF
   # USB access without root: the one step that needs sudo
-  if [ ! -f "$rules" ] && command -v sudo >/dev/null 2>&1; then
+  if ! cmp -s "$dest/99-bs1cooler.rules" "$rules" && command -v sudo >/dev/null 2>&1; then  # new, or changed by an update
     echo "Allowing your user to reach the cooler over USB (needs sudo once):"
     if sudo install -m 644 "$dest/99-bs1cooler.rules" "$rules"; then
       sudo udevadm control --reload && sudo udevadm trigger || true

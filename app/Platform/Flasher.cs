@@ -33,18 +33,28 @@ public static class Flasher
     public static async Task Run(Edition e, Action<string, double> progress, Action driverMissing, CancellationToken ct)
     {
         var image = Image(e);
-        Ch375Port? port;
+        IIspPort? port;
         bool warned = false;
-        while ((port = Ch375Port.Open()) == null)
+        while ((port = OpenPort()) == null)
         {
             ct.ThrowIfCancellationRequested();
-            if (!warned && BootloaderWithoutDriver()) { warned = true; driverMissing(); }
+            if (!warned && OperatingSystem.IsWindows() && BootloaderWithoutDriver()) { warned = true; driverMissing(); }
             await Task.Delay(150, ct);
         }
         Log.Write($"flash {e}: bootloader found");
         using (port) await Task.Run(() => new WchIsp(port).Flash(image, progress), CancellationToken.None);
         Log.Write($"flash {e}: done");
     }
+
+    /// Windows: WCH's driver. Linux: usbfs, no driver needed (the udev rule gives access).
+#if WINDOWS
+    private static IIspPort? OpenPort() => Ch375Port.Open();
+#else
+    private static IIspPort? OpenPort() => OperatingSystem.IsLinux() ? UsbfsPort.Open() : null;
+#endif
+
+    /// Flashing works on Windows and Linux (macOS: not yet).
+    public static bool Supported => OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
 
     /// Plugged in, in bootloader mode, but Windows has no driver bound to it.
     private static bool BootloaderWithoutDriver()

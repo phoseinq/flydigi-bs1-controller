@@ -21,6 +21,10 @@ public static class Program
             int r = SelfTest.Run();
             if (r == 0 && (Flasher.CustomVersion() < 15 || Flasher.Image(Flasher.Edition.Official).Length < 100_000)) { Console.WriteLine("FAIL: sealed firmware"); return 1; }
             if (r == 0 && Tx.Collisions() is { Length: > 0 } c) { Console.WriteLine("FAIL: shared translations: " + string.Join("; ", c)); return 1; }
+#if !WINDOWS
+            // the kernel reads usbdevfs_bulktransfer as 3 x u32 + a pointer: a wrong layout writes to random memory
+            if (r == 0 && Environment.Is64BitProcess && Marshal.SizeOf<UsbfsPort.BulkTransfer>() != 24) { Console.WriteLine("FAIL: usbfs struct size"); return 1; }
+#endif
             return r;
         }
         if (args.Contains("--seal-firmware"))  // dev: plain images (never in git) -> sealed ones the build embeds
@@ -34,6 +38,21 @@ public static class Program
                 File.WriteAllBytes(Path.Combine(fw, name), sealedData);
                 Console.WriteLine($"{name}: {data.Length} bytes sealed");
             }
+            return 0;
+        }
+        if (args.Contains("--flash"))  // dev: flash without the window (tests a port, e.g. Linux usbfs in WSL)
+        {
+            var ed = args.SkipWhile(a => a != "--flash").Skip(1).FirstOrDefault() == "official" ? Flasher.Edition.Official : Flasher.Edition.Custom;
+            Console.WriteLine($"flash {ed}: waiting for the bootloader (hold the power button while plugging in)...");
+            using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+            int last = -1;
+            try
+            {
+                Flasher.Run(ed, (step, f) => { if ((int)(f * 10) != last) Console.WriteLine($"{step} {(last = (int)(f * 10)) * 10}%"); },
+                    () => Console.WriteLine("bootloader seen, but no driver"), cts.Token).GetAwaiter().GetResult();
+            }
+            catch (Exception e) { Console.WriteLine("FAIL: " + e.Message); return 1; }
+            Console.WriteLine("flash ok");
             return 0;
         }
         if (args.Contains("--signals"))  // dev: quiet-mode inputs now, and who holds a microphone

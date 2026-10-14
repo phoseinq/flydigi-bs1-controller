@@ -1,3 +1,5 @@
-# Lets the logged-in user talk to the Flydigi BS1 over USB (hidraw) without root.
+# Lets the logged-in user talk to the Flydigi BS1 over USB (hidraw), and to its bootloader for firmware updates, without root.
 # Install: sudo cp 99-bs1cooler.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="04a0", ATTRS{idProduct}=="2501", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="4348", ATTRS{idProduct}=="55e0", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55e0", TAG+="uaccess"
