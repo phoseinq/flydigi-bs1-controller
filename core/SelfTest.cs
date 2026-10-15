@@ -47,17 +47,21 @@ public static class SelfTest
             {
                 var g = new MediaGate(); var t0 = new DateTime(2026, 1, 1);
                 bool At(double sec, bool sound) => g.Update(sound, t0.AddSeconds(sec));
+                // the controller samples about every 3 s (2 s wait + the pass)
                 bool on = false;
-                for (int i = 0; i < 10; i++) on |= At(i, true);
+                for (int i = 0; i < 10; i += 3) on |= At(i, true);
                 Check(!on, "quiet: not before 10 s of sound");
-                Check(At(10, true), "quiet: on after 10 s of steady sound");
-                Check(At(25, false) && At(39, false) && !At(40, false), "quiet: holds through 30 s of silence, then off");
+                Check(At(12, true), "quiet: on after 10 s of steady sound");
+                Check(At(25, false) && At(41, false) && !At(42, false), "quiet: holds through 30 s of silence, then off");
                 var b = new MediaGate(); bool any = false;
-                for (int i = 0; i <= 60; i++) any |= b.Update(i % 3 == 0, t0.AddSeconds(i));  // a notification every 3 s
-                Check(!any, "quiet: separate notifications never add up");
+                for (int i = 0; i <= 120; i += 3) any |= b.Update(i % 9 == 0, t0.AddSeconds(i));  // a notification every 9 s
+                Check(!any, "quiet: separate notifications don't add up");
                 var m = new MediaGate(); bool late = false;
-                for (int i = 0; i <= 12; i++) late |= m.Update(i % 2 == 0, t0.AddSeconds(i));  // music, a missed sample now and then
-                Check(late, "quiet: one missed sample doesn't break a song");
+                for (int i = 0; i <= 15; i += 3) late |= m.Update(i != 6, t0.AddSeconds(i));  // a film with a quiet moment
+                Check(late, "quiet: one quiet sample doesn't break a film");
+                var j = new MediaGate(); bool jit = false;
+                foreach (double sec in new[] { 0, 3.4, 6.9, 10.3, 13.6 }) jit |= j.Update(true, t0.AddSeconds(sec));  // slow passes (3.5 s)
+                Check(jit, "quiet: slow samples still add up");
             }
             var teal = new Lighting { Mode = LightMode.Static, Colors = new() { "#00FFBB" }, Brightness = 20 }.Config();
             Check(teal.Length == 96, "config length");

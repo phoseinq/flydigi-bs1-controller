@@ -697,11 +697,12 @@ public sealed class Controller
 }
 
 /// Turns the raw "sound right now?" samples into quiet mode on/off without flicker: on after 10 s of steady sound
-/// (a silence over 2.5 s starts the count again, so notifications never add up), off after 30 s of silence
+/// (a silence over 7 s starts the count again, so notifications don't add up), off after 30 s of silence
 /// (quiet film scenes, gaps between songs).
 public sealed class MediaGate(TimeSpan? enter = null)
 {
-    public static readonly TimeSpan Leave = TimeSpan.FromSeconds(30), Gap = TimeSpan.FromSeconds(2.5);
+    // Gap > two sampling intervals (2 s wait + the pass: 2.5-3.5 s each): one quiet sample must not break a film
+    public static readonly TimeSpan Leave = TimeSpan.FromSeconds(30), Gap = TimeSpan.FromSeconds(7);
     private readonly TimeSpan Enter = enter ?? TimeSpan.FromSeconds(10);
     private DateTime? since;  // start of the current run of sound
     private DateTime last;    // last time sound was heard
