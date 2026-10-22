@@ -3,7 +3,7 @@
         xmlns:ui="using:FluentAvalonia.UI.Controls"
         xmlns:ic="using:FluentIcons.Avalonia"
         x:Class="Bs1Cooler.App.MainWindow"
-        Title="BS1 Cooler" Width="400" Height="620" CanResize="False"
+        Title="BS1 Cooler" Width="400" Height="720" MaxHeight="720" CanResize="False"
         TransparencyLevelHint="Mica, AcrylicBlur" Background="Transparent"
         WindowDecorations="BorderOnly" CanMaximize="False" CanMinimize="False" WindowStartupLocation="Manual">
   <Panel>
@@ -33,14 +33,14 @@
             <!-- heavy CPU/GPU work: more air before the heat shows, quiet mode held off -->
             <Border Name="HeavyPill" Background="#33F0922F" CornerRadius="8" Padding="6,1" IsVisible="False">
               <StackPanel Orientation="Horizontal" Spacing="3">
-                <ic:SymbolIcon Symbol="Flash" IconVariant="Filled" FontSize="11" Foreground="#F0922F" />
-                <TextBlock Name="HeavyText" Text="Heavy load" FontSize="11" Foreground="#F0922F" />
+                <ic:SymbolIcon Symbol="Flash" IconVariant="Filled" FontSize="12" Foreground="#F0922F" />
+                <TextBlock Name="HeavyText" Text="Heavy load" FontSize="12" Foreground="#F0922F" />
               </StackPanel>
             </Border>
             <Border Name="QuietPill" Background="#332DB467" CornerRadius="8" Padding="6,1" IsVisible="False">
               <StackPanel Orientation="Horizontal" Spacing="3">
-                <ic:SymbolIcon Symbol="LeafTwo" IconVariant="Filled" FontSize="11" Foreground="#2DB467" />
-                <TextBlock Name="QuietText" Text="Quiet" FontSize="11" Foreground="#2DB467" />
+                <ic:SymbolIcon Symbol="LeafTwo" IconVariant="Filled" FontSize="12" Foreground="#2DB467" />
+                <TextBlock Name="QuietText" Text="Quiet" FontSize="12" Foreground="#2DB467" />
               </StackPanel>
             </Border>
           </StackPanel>
@@ -477,7 +477,7 @@
                        Stroke="{DynamicResource AccentFillColorDefaultBrush}" StrokeThickness="2" Opacity="0" />
               <Border Width="18" Height="12" CornerRadius="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="181,39,0,0"
                       Background="{DynamicResource AccentFillColorDefaultBrush}" />
-              <TextBlock Text="power" Classes="caption" FontSize="10" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="174,8,0,0" />
+              <TextBlock Text="power" Classes="caption" FontSize="11" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="174,8,0,0" />
               <Border Width="6" Height="14" CornerRadius="2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="216,71,0,0" Background="{DynamicResource TextFillColorTertiaryBrush}" />
               <!-- cable: plug + lead, slides in and out -->
               <StackPanel Name="Cable" Classes="cable" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="224,70,0,0">

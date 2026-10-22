@@ -31,6 +31,7 @@
     <Compile Remove="Platform\Win*.cs;Platform\Temps.cs" Condition="'$(TargetFramework)' == 'net10.0'" />
     <Compile Remove="Platform\Linux\**;Platform\Mac\**" Condition="'$(TargetFramework)' != 'net10.0'" />
     <AvaloniaResource Include="Assets\cooler.ico" />
+    <AvaloniaResource Include="Assets\Fonts\*.ttf" />  <!-- Vazirmatn (OFL, Assets\Fonts\OFL.txt): Persian + Latin; CJK falls back to the system -->
     <!-- sealed images (FirmwareBox); made from the plain .bin files by running the app with the seal-firmware flag -->
     <EmbeddedResource Include="..\firmware\official.bin.sealed" LogicalName="official.bin" WithCulture="false" />
     <EmbeddedResource Include="..\firmware\custom.bin.sealed" LogicalName="custom.bin" WithCulture="false" />

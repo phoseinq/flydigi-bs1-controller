@@ -48,10 +48,30 @@ public partial class MainWindow : Window
     public void ShowNearTray()
     {
         Show();
+        Anchor();
+        Activate();
+    }
+
+    // bottom-right above the tray; again whenever the height changes, so the window grows upward
+    private void Anchor()
+    {
         var area = Screens.ScreenFromWindow(this)?.WorkingArea ?? Screens.Primary!.WorkingArea;
         double scale = Screens.ScreenFromWindow(this)?.Scaling ?? 1;
-        Position = new PixelPoint(area.Right - (int)(Width * scale) - 12, area.Bottom - (int)(Height * scale) - 12);
-        Activate();
+        Position = new PixelPoint(area.Right - (int)(ClientSize.Width * scale) - 12, area.Bottom - (int)(ClientSize.Height * scale) - 12);
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == ClientSizeProperty && IsVisible) Anchor();
+    }
+
+    // Home is as tall as its content (the color row comes and goes with the effect); the other pages scroll at full height.
+    private void FitHeight()
+    {
+        bool home = Home.IsVisible;
+        SizeToContent = home ? SizeToContent.Height : SizeToContent.Manual;
+        if (!home) Height = MaxHeight;
     }
 
     private void Wire()
@@ -274,6 +294,7 @@ public partial class MainWindow : Window
         SmartHint.IsVisible = smart;
         LightPanel.IsEnabled = L.On;
         ColorRow.IsVisible = L.Mode is not (LightMode.Temperature or LightMode.TemperatureBreathe);
+        FitHeight();
     }
 
     private void FanModeChanged()

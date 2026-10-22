@@ -91,6 +91,7 @@ public static class Program
 
         return AppBuilder.Configure<App>()
             .UsePlatformDetect()
+            .With(new Avalonia.Media.FontManagerOptions { DefaultFamilyName = "avares://Bs1Cooler/Assets/Fonts#Vazirmatn" })
             .AfterSetup(b => Setup((IClassicDesktopStyleApplicationLifetime)b.Instance!.ApplicationLifetime!, ctl, args))
             .StartWithClassicDesktopLifetime(args, ShutdownMode.OnExplicitShutdown);
     }

@@ -22,6 +22,7 @@ public partial class MainWindow
     private void ShowPage(Control page)
     {
         foreach (var p in new Control[] { Home, SettingsPage, TempsPage, SetupPage, UpdatePage }) p.IsVisible = p == page;
+        FitHeight();
     }
 
     private void WireFirmware()
@@ -217,15 +218,18 @@ public partial class MainWindow
         if (show == "update") { ShowStep(StepPlug); SetPhase(2); }
         if (show == "choose") { ShowStep(StepChoose); UpdateGo.IsEnabled = false; }
         QuietBadge.IsVisible = QuietPill.IsVisible = true;  // preview quiet mode
-        ColorRow.IsVisible = true;  // preview the color row (no settings change: smoke must never save)
+        ColorRow.IsVisible = show != "nocolor";  // preview the color row (no settings change: smoke must never save)
+        FitHeight();
         if (show == "quiet") Avalonia.Threading.Dispatcher.UIThread.Post(() => QuietOnCalls.BringIntoView(), Avalonia.Threading.DispatcherPriority.Background);
     }
 
     public void Snapshot(string path)
     {
         Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#202020"));  // Mica isn't part of the render
-        Measure(new Avalonia.Size(Width, Height)); Arrange(new Avalonia.Rect(0, 0, Width, Height));  // also when never shown (--hidden)
-        var size = new Avalonia.PixelSize((int)Width, (int)Height);
+        Measure(new Avalonia.Size(Width, MaxHeight));  // also when never shown (--hidden)
+        double h = SizeToContent == SizeToContent.Height ? DesiredSize.Height : Height;
+        Arrange(new Avalonia.Rect(0, 0, Width, h));
+        var size = new Avalonia.PixelSize((int)Width, (int)h);
         using var bmp = new Avalonia.Media.Imaging.RenderTargetBitmap(size);
         bmp.Render(this);
         bmp.Save(path);
