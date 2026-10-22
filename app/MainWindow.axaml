@@ -446,10 +446,21 @@
               <TextBlock Classes="caption" TextWrapping="Wrap" Text="The latest from Flydigi, unchanged. Also the way back from ours." />
             </StackPanel>
           </RadioButton>
-          <CheckBox Name="Consent" Margin="0,6,0,0">
-            <TextBlock TextWrapping="Wrap" Classes="caption"
-                       Text="I understand the cooler restarts during the update. If anything goes wrong, the same steps put the official firmware back." />
-          </CheckBox>
+          <!-- consent: set apart from the firmware choices so it doesn't read as a third option -->
+          <Border Margin="0,10,0,0" Padding="12,10" CornerRadius="8" BorderThickness="1"
+                  Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource AccentFillColorDefaultBrush}">
+            <StackPanel Spacing="6">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <ic:SymbolIcon Symbol="Info" FontSize="16" Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
+                <TextBlock Text="Before you continue" FontWeight="SemiBold" VerticalAlignment="Center" />
+              </StackPanel>
+              <CheckBox Name="Consent">
+                <TextBlock TextWrapping="Wrap"
+                           Text="I'm OK with updating the firmware. I can switch back to the official one anytime." />
+              </CheckBox>
+              <TextBlock Name="ConsentHint" Classes="caption" TextWrapping="Wrap" Text="Tick the box to enable Next." />
+            </StackPanel>
+          </Border>
         </StackPanel>
 
         <!-- 2. bootloader instructions: an animated cooler + steps that tick themselves off -->

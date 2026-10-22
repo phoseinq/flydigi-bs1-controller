@@ -33,7 +33,7 @@ public partial class MainWindow
         UpdateBack.Click += (_, _) => CloseUpdate();
         UpdateCancel.Click += (_, _) => CloseUpdate();
         UpdateGo.Click += (_, _) => UpdateNext();
-        Consent.IsCheckedChanged += (_, _) => UpdateGo.IsEnabled = Consent.IsChecked == true;
+        Consent.IsCheckedChanged += (_, _) => ConsentHint.IsVisible = !(UpdateGo.IsEnabled = Consent.IsChecked == true);
         DriverBtn.Click += async (_, _) =>
         {
             DriverBtn.IsEnabled = false;
@@ -106,6 +106,7 @@ public partial class MainWindow
         if (SetupPage.IsVisible) CompleteSetup();
         CurrentFw.Text = ctl.Dev.Connected ? Tx.Tr("Now on the cooler: {0}.", FirmwareName()) : Tx.Tr("The cooler isn't connected; you can still update it.");
         Consent.IsChecked = false;
+        ConsentHint.IsVisible = true;
         PickOfficial.IsChecked = S.Edition == Edition.Official;
         PickCustom.IsChecked = S.Edition != Edition.Official;
         UpdateGo.IsEnabled = false;
@@ -212,8 +213,9 @@ public partial class MainWindow
         foreach (var step in new Control[] { StepChoose, StepPlug, StepFlash, StepDone }) ShowStep(step);
         SetPhase(1);
         SetPhase(2);
-        ShowPage(show switch { "settings" or "quiet" => SettingsPage, "temps" => TempsPage, "setup" => SetupPage, "update" => UpdatePage, _ => Home });
+        ShowPage(show switch { "settings" or "quiet" => SettingsPage, "temps" => TempsPage, "setup" => SetupPage, "update" or "choose" => UpdatePage, _ => Home });
         if (show == "update") { ShowStep(StepPlug); SetPhase(2); }
+        if (show == "choose") { ShowStep(StepChoose); UpdateGo.IsEnabled = false; }
         QuietBadge.IsVisible = QuietPill.IsVisible = true;  // preview quiet mode
         ColorRow.IsVisible = true;  // preview the color row (no settings change: smoke must never save)
         if (show == "quiet") Avalonia.Threading.Dispatcher.UIThread.Post(() => QuietOnCalls.BringIntoView(), Avalonia.Threading.DispatcherPriority.Background);

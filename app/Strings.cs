@@ -147,8 +147,10 @@ public static class Tx
             ("بعد از قطع برق خودش روشن می‌شه، رنگ‌های نرم، انیمیشن روشن و خاموش شدن، و خاموشی واقعی.", "断电后自动启动、平滑颜色、开关机动画、真正关闭。"),
         ["Official Flydigi firmware"] = ("فریم‌ور رسمی Flydigi", "Flydigi 官方固件"),
         ["The latest from Flydigi, unchanged. Also the way back from ours."] = ("آخرین نسخه‌ی Flydigi بدون تغییر. راه برگشت از نسخه‌ی ما هم همینه.", "Flydigi 最新版，未修改。也可用来恢复官方固件。"),
-        ["I understand the cooler restarts during the update. If anything goes wrong, the same steps put the official firmware back."] =
-            ("می‌دونم کولر وسط آپدیت ری‌استارت می‌شه. اگه مشکلی پیش بیاد، با همین مراحل فریم‌ور رسمی برمی‌گرده.", "我了解更新时散热器会重启。如果出问题，同样的步骤可以恢复官方固件。"),
+        ["Before you continue"] = ("قبل از ادامه", "继续之前"),
+        ["I'm OK with updating the firmware. I can switch back to the official one anytime."] =
+            ("با آپدیت فریم‌ور موافقم. هر وقت بخوام می‌تونم به فریم‌ور رسمی برگردم.", "我同意更新固件。随时可以换回官方固件。"),
+        ["Tick the box to enable Next."] = ("برای فعال شدن «بعدی» این گزینه رو تیک بزن.", "勾选此项后才能点击“下一步”。"),
         ["Cancel"] = ("لغو", "取消"),
         ["Put the cooler in update mode"] = ("کولر رو ببر تو حالت آپدیت", "让散热器进入更新模式"),
         ["Unplug the cooler's USB-C cable"] = ("کابل USB-C کولر رو بکش", "拔下散热器的 USB-C 线"),
