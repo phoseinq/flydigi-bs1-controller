@@ -94,6 +94,7 @@ public sealed class Controller
         Log.Write("resume");
         poweringDown = false;
         startupPending = lightDirty = true;
+        DeviceOpen = null;  // the pre-sleep value is stale: the next tick must read it again
         Kick();
     }
 
@@ -241,6 +242,8 @@ public sealed class Controller
             // reply is mode+1, like cmd 8's payload: 0 = gear 0 (stopped), 1-4 = gears, 5 = smart
             if (await Dev.SendAsync(C.DeviceMode) is [var m, ..]) DeviceMode = m - 1;
 
+            // a dead link right after wake loses the reply: keep the startup/reopen decision for the next tick
+            if (justConnected && DeviceOpen == null) return;
             if (justConnected)
             {
                 justConnected = false;
