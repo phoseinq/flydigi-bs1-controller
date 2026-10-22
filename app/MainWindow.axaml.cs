@@ -66,17 +66,19 @@ public partial class MainWindow : Window
     {
         base.OnPropertyChanged(change);
         if (change.Property == ClientSizeProperty && IsVisible && Pinned) Anchor();
+        if (change.Property == IsVisibleProperty && IsVisible) FitHeight();  // measured only while shown: a never-shown window (--tray) has no templates yet and measures nearly empty
     }
 
     // Home is as tall as its content (the color row comes and goes with the effect); the other pages scroll at full height.
     // Measured by hand: SizeToContent kept stale heights after visiting another page.
     private void FitHeight()
     {
+        if (!IsVisible) return;
         if (!Home.IsVisible) { Height = MaxHeight; return; }
         // after the layout pass: a control shown/hidden just now only reaches Home's size once it was measured itself
         Dispatcher.UIThread.Post(() =>
         {
-            if (!Home.IsVisible) return;
+            if (!IsVisible || !Home.IsVisible) return;
             Home.Measure(new Size(Width, double.PositiveInfinity));
             Height = Math.Min(MaxHeight, Math.Ceiling(Home.DesiredSize.Height));
         }, DispatcherPriority.Background);

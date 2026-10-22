@@ -146,10 +146,11 @@ public static class Program
                 win.ShowActivated = false;
                 win.Position = new PixelPoint(-32000, -32000);
                 win.Pinned = false;
-                win.Show();
+                if (args.Contains("--late")) { Avalonia.Threading.DispatcherTimer.RunOnce(() => win.Show(), TimeSpan.FromMilliseconds(800)); }  // like --tray: built and laid out long before the first show
+                else win.Show();
             }
             else win.ShowNearTray();
-            win.SmokeTest(args.SkipWhile(a => a != "--show").Skip(1).FirstOrDefault(), args.SkipWhile(a => a != "--lang").Skip(1).FirstOrDefault());  // --show <page>: stay there (screenshots)
+            if (!args.Contains("--late")) win.SmokeTest(args.SkipWhile(a => a != "--show").Skip(1).FirstOrDefault(), args.SkipWhile(a => a != "--lang").Skip(1).FirstOrDefault());  // --show <page>: stay there (screenshots)
             string? png = args.SkipWhile(a => a != "--png").Skip(1).FirstOrDefault();
             Avalonia.Threading.DispatcherTimer.RunOnce(() =>
             {
