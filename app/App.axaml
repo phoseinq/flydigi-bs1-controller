@@ -32,16 +32,20 @@
     <Style Selector="StackPanel[Orientation=Horizontal] > TextBlock, StackPanel[Orientation=Horizontal] > ic|SymbolIcon, Grid > ic|SymbolIcon">
       <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
+    <!-- Vazirmatn's line box keeps room for Persian descenders, so its letters sit above the box center: lift the icons to meet them -->
+    <Style Selector="StackPanel[Orientation=Horizontal] > ic|SymbolIcon, Grid > ic|SymbolIcon">
+      <Setter Property="Margin" Value="0,0,0,3" />
+    </Style>
     <!-- status pills next to the connection text (quiet, heavy load) -->
     <Style Selector="Border.pill">
       <Setter Property="CornerRadius" Value="10" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="Padding" Value="7,1,8,1" />
-      <Setter Property="MinHeight" Value="20" />
+      <Setter Property="Padding" Value="7,2,8,2" />
+      <Setter Property="MinHeight" Value="22" />
     </Style>
     <Style Selector="Border.pill TextBlock">
       <Setter Property="FontSize" Value="12" />
-      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="FontWeight" Value="Bold" />
     </Style>
     <Style Selector="Border.pill ic|SymbolIcon"><Setter Property="FontSize" Value="13" /></Style>
     <Style Selector="TextBlock.title">

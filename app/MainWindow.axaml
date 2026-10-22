@@ -31,16 +31,16 @@
             <ic:SymbolIcon Name="LinkIcon" Symbol="UsbPlug" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             <TextBlock Name="StatusText" Classes="caption" Text="Searching…" />
             <!-- heavy CPU/GPU work: more air before the heat shows, quiet mode held off -->
-            <Border Name="HeavyPill" Classes="pill" Background="#26F0922F" BorderBrush="#66F0922F" IsVisible="False">
+            <Border Name="HeavyPill" Classes="pill" Background="#F0922F" BorderBrush="#F0922F" IsVisible="False">
               <StackPanel Orientation="Horizontal" Spacing="4">
-                <ic:SymbolIcon Symbol="Flash" IconVariant="Filled" Foreground="#F0922F" />
-                <TextBlock Name="HeavyText" Text="Heavy load" Foreground="#F0922F" />
+                <ic:SymbolIcon Symbol="Flash" IconVariant="Filled" Foreground="#2A1600" />
+                <TextBlock Name="HeavyText" Text="Heavy load" Foreground="#2A1600" />
               </StackPanel>
             </Border>
-            <Border Name="QuietPill" Classes="pill" Background="#262DB467" BorderBrush="#662DB467" IsVisible="False">
+            <Border Name="QuietPill" Classes="pill" Background="#2DB467" BorderBrush="#2DB467" IsVisible="False">
               <StackPanel Orientation="Horizontal" Spacing="4">
-                <ic:SymbolIcon Symbol="LeafTwo" IconVariant="Filled" Foreground="#3CC878" />
-                <TextBlock Name="QuietText" Text="Quiet" Foreground="#3CC878" />
+                <ic:SymbolIcon Symbol="LeafTwo" IconVariant="Filled" Foreground="#06240F" />
+                <TextBlock Name="QuietText" Text="Quiet" Foreground="#06240F" />
               </StackPanel>
             </Border>
           </StackPanel>
