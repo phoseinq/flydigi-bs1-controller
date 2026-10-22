@@ -218,6 +218,7 @@ public partial class MainWindow
         if (show == "update") { ShowStep(StepPlug); SetPhase(2); }
         if (show == "choose") { ShowStep(StepChoose); UpdateGo.IsEnabled = false; }
         QuietBadge.IsVisible = QuietPill.IsVisible = true;  // preview quiet mode
+        QuietText.Text = $"{Tx.Tr("Quiet")} · {Tx.Tr("Night")}";
         ColorRow.IsVisible = show != "nocolor";  // preview the color row (no settings change: smoke must never save)
         FitHeight();
         if (show == "quiet") Avalonia.Threading.Dispatcher.UIThread.Post(() => QuietOnCalls.BringIntoView(), Avalonia.Threading.DispatcherPriority.Background);
