@@ -145,6 +145,7 @@ public static class Program
                 win.ShowInTaskbar = false;
                 win.ShowActivated = false;
                 win.Position = new PixelPoint(-32000, -32000);
+                win.Pinned = false;
                 win.Show();
             }
             else win.ShowNearTray();
@@ -153,7 +154,7 @@ public static class Program
             Avalonia.Threading.DispatcherTimer.RunOnce(() =>
             {
                 if (png != null) { win.Snapshot(png); QuietIcon.Draw().Save(png.Replace(".png", "-icon.png")); }  // drawn by the app itself: works even when the screen is covered
-                Console.WriteLine("smoke ok");
+                Console.WriteLine($"smoke ok (window height {win.ClientSize.Height})");
                 life.Shutdown();
             }, TimeSpan.FromSeconds(png != null ? 2 : 3));
             return;

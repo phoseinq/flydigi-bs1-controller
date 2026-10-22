@@ -217,9 +217,11 @@ public partial class MainWindow
         ShowPage(show switch { "settings" or "quiet" => SettingsPage, "temps" => TempsPage, "setup" => SetupPage, "update" or "choose" => UpdatePage, _ => Home });
         if (show == "update") { ShowStep(StepPlug); SetPhase(2); }
         if (show == "choose") { ShowStep(StepChoose); UpdateGo.IsEnabled = false; }
+        if (show == "back") { ShowPage(SettingsPage); Avalonia.Threading.DispatcherTimer.RunOnce(() => ShowPage(Home), TimeSpan.FromMilliseconds(700)); }  // settings, then back home after a layout pass
+        if (show == "colorback") { ShowPage(SettingsPage); Avalonia.Threading.DispatcherTimer.RunOnce(() => { ShowPage(Home); ColorRow.IsVisible = true; FitHeight(); }, TimeSpan.FromMilliseconds(700)); }
         QuietBadge.IsVisible = QuietPill.IsVisible = true;  // preview quiet mode
         QuietText.Text = $"{Tx.Tr("Quiet")} · {Tx.Tr("Night")}";
-        ColorRow.IsVisible = show != "nocolor";  // preview the color row (no settings change: smoke must never save)
+        ColorRow.IsVisible = show is not ("nocolor" or "back");  // preview the color row (no settings change: smoke must never save)
         FitHeight();
         if (show == "quiet") Avalonia.Threading.Dispatcher.UIThread.Post(() => QuietOnCalls.BringIntoView(), Avalonia.Threading.DispatcherPriority.Background);
     }
@@ -227,11 +229,10 @@ public partial class MainWindow
     public void Snapshot(string path)
     {
         Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#202020"));  // Mica isn't part of the render
-        Measure(new Avalonia.Size(Width, MaxHeight));  // also when never shown (--hidden)
-        double h = SizeToContent == SizeToContent.Height ? DesiredSize.Height : Height;
-        Arrange(new Avalonia.Rect(0, 0, Width, h));
-        var size = new Avalonia.PixelSize((int)Width, (int)h);
-        using var bmp = new Avalonia.Media.Imaging.RenderTargetBitmap(size);
+        double h = Height;
+        Measure(new Avalonia.Size(Width, h)); Arrange(new Avalonia.Rect(0, 0, Width, h));  // also when never shown (--hidden)
+        var size = new Avalonia.PixelSize((int)Width * 2, (int)h * 2);  // 200%: small text and icon alignment stay visible
+        using var bmp = new Avalonia.Media.Imaging.RenderTargetBitmap(size, new Avalonia.Vector(192, 192));
         bmp.Render(this);
         bmp.Save(path);
     }

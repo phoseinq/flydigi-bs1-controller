@@ -52,6 +52,8 @@ public partial class MainWindow : Window
         Activate();
     }
 
+    public bool Pinned = true;  // false for the off-screen smoke window
+
     // bottom-right above the tray; again whenever the height changes, so the window grows upward
     private void Anchor()
     {
@@ -63,15 +65,21 @@ public partial class MainWindow : Window
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == ClientSizeProperty && IsVisible) Anchor();
+        if (change.Property == ClientSizeProperty && IsVisible && Pinned) Anchor();
     }
 
     // Home is as tall as its content (the color row comes and goes with the effect); the other pages scroll at full height.
+    // Measured by hand: SizeToContent kept stale heights after visiting another page.
     private void FitHeight()
     {
-        bool home = Home.IsVisible;
-        SizeToContent = home ? SizeToContent.Height : SizeToContent.Manual;
-        if (!home) Height = MaxHeight;
+        if (!Home.IsVisible) { Height = MaxHeight; return; }
+        // after the layout pass: a control shown/hidden just now only reaches Home's size once it was measured itself
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!Home.IsVisible) return;
+            Home.Measure(new Size(Width, double.PositiveInfinity));
+            Height = Math.Min(MaxHeight, Math.Ceiling(Home.DesiredSize.Height));
+        }, DispatcherPriority.Background);
     }
 
     private void Wire()
